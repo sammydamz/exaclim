@@ -147,3 +147,10 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Python development outputs
+__pycache__/
+*.py[cod]
+.venv/
+# Generated document exports
+deliverables/
