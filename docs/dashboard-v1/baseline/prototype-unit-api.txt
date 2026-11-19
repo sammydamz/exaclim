@@ -1,0 +1,53 @@
+$ npm test
+
+> exaclim@0.1.0 test
+> npm run build && python3 -m unittest discover -s tests -v
+
+
+> exaclim@0.1.0 build
+> vite build
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 183 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              14.99 kB │ gzip:  4.18 kB
+dist/styles.css                              93.12 kB │ gzip: 13.67 kB
+dist/assets/announce-DIEf9ve1.js              0.05 kB │ gzip:  0.06 kB
+dist/assets/announce-OG2sjTD8.js              0.71 kB │ gzip:  0.45 kB
+dist/assets/keyboard-BwM5nD8D.js              7.22 kB │ gzip:  2.91 kB
+dist/assets/sheet-presentation-BoniGz4G.js   35.74 kB │ gzip: 12.94 kB
+dist/app.js                                 250.62 kB │ gzip: 86.23 kB
+
+✓ built in 301ms
+test_bad_and_missing_inputs_cautious (test_engine.EngineTests.test_bad_and_missing_inputs_cautious) ... ok
+test_emergency_overrides_and_ack_does_not_clear (test_engine.EngineTests.test_emergency_overrides_and_ack_does_not_clear) ... ok
+test_exact_score_boundaries (test_engine.EngineTests.test_exact_score_boundaries) ... ok
+test_forecast_escalates_cannot_lower_floor (test_engine.EngineTests.test_forecast_escalates_cannot_lower_floor) ... ok
+test_forecast_order_invalid_rows_and_no_state_mutation (test_engine.EngineTests.test_forecast_order_invalid_rows_and_no_state_mutation) ... ok
+test_hot_case_red (test_engine.EngineTests.test_hot_case_red) ... ok
+test_huge_json_integer_rejected_without_overflow (test_engine.EngineTests.test_huge_json_integer_rejected_without_overflow) ... ok
+test_low_scenario_is_explainable (test_engine.EngineTests.test_low_scenario_is_explainable) ... ok
+test_stale_not_green_and_preserves_red (test_engine.EngineTests.test_stale_not_green_and_preserves_red) ... ok
+test_work_and_ppe_increase_index (test_engine.EngineTests.test_work_and_ppe_increase_index) ... ok
+test_expired_forecast_rejected (test_forecast.ForecastTests.test_expired_forecast_rejected) ... ok
+test_live_adapter_preserves_source_and_freshness (test_forecast.ForecastTests.test_live_adapter_preserves_source_and_freshness) ... ok
+test_missing_misaligned_null_and_nonfinite_values_rejected (test_forecast.ForecastTests.test_missing_misaligned_null_and_nonfinite_values_rejected) ... ok
+test_client_can_raise_emergency_but_never_clear_it (test_server.ServerTests.test_client_can_raise_emergency_but_never_clear_it) ... ok
+test_cookie_sessions_are_isolated (test_server.ServerTests.test_cookie_sessions_are_isolated) ... ok
+test_crew_suppression_and_no_worker_history (test_server.ServerTests.test_crew_suppression_and_no_worker_history) ... ok
+test_emergency_cannot_be_cleared_by_ack_or_forged_payload (test_server.ServerTests.test_emergency_cannot_be_cleared_by_ack_or_forged_payload) ... ok
+test_forecast_fixture_labeled (test_server.ServerTests.test_forecast_fixture_labeled) ... ok
+test_invalid_measurement_does_not_reassure (test_server.ServerTests.test_invalid_measurement_does_not_reassure) ... ok
+test_malformed_body_and_cross_origin_are_rejected (test_server.ServerTests.test_malformed_body_and_cross_origin_are_rejected) ... ok
+test_old_readings_become_cautious_without_manual_age_input (test_server.ServerTests.test_old_readings_become_cautious_without_manual_age_input) ... ok
+test_optional_forecast_is_computed_and_cannot_lower_floor (test_server.ServerTests.test_optional_forecast_is_computed_and_cannot_lower_floor) ... ok
+test_static_assets_and_health (test_server.ServerTests.test_static_assets_and_health) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 0.615s
+
+OK
+
+Exit status: 0

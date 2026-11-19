@@ -1,0 +1,25 @@
+requirement_id,source_summary,prd_sections,engineering_tasks,qa_cases,status
+D1,Today/tomorrow hourly site forecast,6,ENG01; ENG05; ENG08; ENG14; ENG24,QA01; QA02; QA04; QA05; QA26; QA42; QA46,Specified; target V1 implementation/acceptance not complete
+D2,Green/amber/red risk colors consistent with wristband,"6, 10",ENG09; ENG14; ENG20; ENG24,QA03; QA28,Specified; target V1 implementation/acceptance not complete
+D3,Clearly highlighted high-risk windows,6,ENG08; ENG14; ENG24,QA01; QA02; QA03; QA04; QA46,Specified; target V1 implementation/acceptance not complete
+D4,Green/amber/red worker counts for each permitted crew,7,ENG04; ENG07; ENG10; ENG15; ENG24,QA06; QA09; QA10; QA11; QA12; QA33; QA40; QA41,Specified; target V1 implementation/acceptance not complete
+D5,Overall status follows most-at-risk members,7,ENG07; ENG09; ENG10; ENG15; ENG24,QA07; QA09,Specified; target V1 implementation/acceptance not complete
+D6,Last-updated information,"7, 11",ENG04; ENG10; ENG15; ENG18; ENG22; ENG24,QA06; QA08; QA12; QA30; QA33; QA41; QA46,Specified; target V1 implementation/acceptance not complete
+D7,Break/rotation advice from forecast and combined crew budget,8,ENG07; ENG09; ENG10; ENG11; ENG16; ENG24,QA09; QA10; QA12; QA14; QA16; QA42,Specified; target V1 implementation/acceptance not complete
+D8,Suggestions are advice; supervisor decides,8,ENG11; ENG16; ENG24,QA15; QA16; QA38,Specified; target V1 implementation/acceptance not complete
+D9,Priority named help alert with crew and time,9,ENG01; ENG04; ENG06; ENG12; ENG17; ENG22; ENG24,QA17; QA18; QA21; QA22; QA27; QA39; QA45; QA47,Specified; target V1 implementation/acceptance not complete
+D10,Alert remains until supervisor acknowledges,9,ENG01; ENG04; ENG13; ENG17; ENG24,QA19; QA20; QA21; QA22,Specified; target V1 implementation/acceptance not complete
+D11,One shared crew phone receives Bluetooth and forwards online,10,ENG01; ENG10; ENG20; ENG21; ENG22,QA06; QA28; QA30; QA33; QA40; QA48,Specified; target V1 implementation/acceptance not complete
+D12,Watch calculates and alerts without phone/network,10,ENG01; ENG20; ENG21; ENG22; ENG27,QA28; QA29; QA42; QA43,Specified; target V1 implementation/acceptance not complete
+D13,Out-of-range help delivered after reconnect; local alerts continue,"9, 10",ENG01; ENG12; ENG17; ENG18; ENG20; ENG21; ENG22; ENG27,QA18; QA22; QA28; QA29; QA30; QA33; QA43; QA47,Specified; target V1 implementation/acceptance not complete
+D14,"Supervisor creates crews, sets site and assigns watches",10,ENG01; ENG04; ENG05; ENG06; ENG19; ENG22,QA25; QA26; QA27; QA31; QA47; QA48,Specified; target V1 implementation/acceptance not complete
+D15,Watch-local clothing/acclimatization and automatic wear-day progression,"10, 15",ENG01; ENG09; ENG19; ENG20; ENG23; ENG27,QA24; QA31; QA32; QA42,Specified; target V1 implementation/acceptance not complete
+P1,Crew-only health visibility with named-help exception,"7, 9, 12",ENG01; ENG03; ENG04; ENG06; ENG07; ENG10; ENG12; ENG15; ENG17; ENG19; ENG21; ENG23; ENG24; ENG25,QA09; QA12; QA13; QA17; QA23; QA24; QA25; QA27; QA31; QA32; QA33; QA35; QA44; QA47; QA48,Specified; target V1 implementation/acceptance not complete
+P2,Combine crews smaller than three,7,ENG01; ENG07; ENG10; ENG15; ENG24; ENG25,QA09; QA10; QA11; QA12; QA13; QA35,Specified; target V1 implementation/acceptance not complete
+P3,No discipline or unrelated employment use,12,ENG03; ENG07; ENG25,QA13; QA15; QA23; QA24; QA25; QA44; QA47; QA48,Specified; target V1 implementation/acceptance not complete
+S1,Symptoms/help override forecast and crew state,"7, 9",ENG09; ENG12; ENG13; ENG17; ENG20; ENG22; ENG24; ENG27,QA07; QA17; QA18; QA19; QA22; QA28; QA29; QA43,Specified; target V1 implementation/acceptance not complete
+S2,"Advice can increase caution, never weaken it",8,ENG09; ENG11; ENG20; ENG24; ENG27,QA03; QA07; QA14; QA16; QA42,Specified; target V1 implementation/acceptance not complete
+S3,"Missing/old data is explicitly cautious, never all-clear","7, 11",ENG08; ENG09; ENG10; ENG11; ENG15; ENG18; ENG20; ENG22; ENG24; ENG27,QA04; QA05; QA07; QA08; QA11; QA12; QA16; QA20; QA28; QA33; QA34; QA41; QA43; QA46,Specified; target V1 implementation/acceptance not complete
+U1,"Supervisor login, one responsive readable screen, labeled colors","2, 5, 12, 13",ENG01; ENG02; ENG03; ENG14; ENG15; ENG16; ENG17; ENG24; ENG25; ENG26; ENG27,QA17; QA23; QA35; QA36; QA37; QA39; QA44; QA45,Specified; target V1 implementation/acceptance not complete
+U2,Weak-connection and out-of-date behavior,"11, 13",ENG18; ENG24; ENG26; ENG27,QA05; QA08; QA13; QA20; QA34; QA35; QA39; QA40,Specified; target V1 implementation/acceptance not complete
+U3,Understandable to new supervisor without training,"2, 5, 13",ENG02; ENG05; ENG16; ENG26; ENG27,QA15; QA26; QA36; QA38; QA45,Specified; target V1 implementation/acceptance not complete

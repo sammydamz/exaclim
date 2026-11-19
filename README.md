@@ -75,3 +75,9 @@ python3 scripts/export_pdfs.py --output /workspace/artifacts/exaclim-jobs
 ```
 
 PDF dependencies are independent of the application. Supplier budget figures remain internal allowances, not verified quotes. Project licensing has not been selected; UI SDK's own license remains with its package. Open-Meteo data requires attribution and its current usage terms apply.
+
+## Supervisor Dashboard V1 planning
+
+The new target specification is in [docs/dashboard-v1](docs/dashboard-v1/README.md): a full PRD, 27 engineering jobs, 48 planned acceptance cases, editable CSV/JSON sheets and requirement traceability. Download the [PDF and editable planning pack](downloads/dashboard-v1/Exaclim-Dashboard-PRD-Tasks-QA.zip).
+
+This is a target build plan, not a claim that the existing prototype already implements it. The new source specifies supervisor-only operation, watch/shared-phone connectivity, three-person privacy grouping and named emergency acknowledgement. Current implementation behavior and the separately executed baseline tests remain documented above.
