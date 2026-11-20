@@ -48,6 +48,21 @@ export function addCrew(state:State,siteId:string,name:string,count:number):Crew
   if(site.crews.some(c=>c.name.toLocaleLowerCase()===name.toLocaleLowerCase())) throw new Error('Crew name already exists');
   const crew={id:crypto.randomUUID(),name,count,watch_ids:[] as string[]}; site.crews.push(crew); return {...crew};
 }
+export function renameCrew(state:State,siteId:string,crewId:string,name:string,count:number):Crew {
+  const site=siteFor(state,siteId),crew=crewFor(site,crewId); name=text(name,'Crew name');
+  if(!Number.isInteger(count)||count<1||count>20) throw new Error('Crew count must be an integer from 1 to 20');
+  if(count<crew.watch_ids.length) throw new Error('Crew count cannot drop below assigned watches');
+  if(site.crews.some(c=>c.id!==crewId&&c.name.toLocaleLowerCase()===name.toLocaleLowerCase())) throw new Error('Crew name already exists');
+  crew.name=name;crew.count=count;return {...crew};
+}
+export function removeCrew(state:State,siteId:string,crewId:string):void {
+  const site=siteFor(state,siteId),crew=crewFor(site,crewId);
+  if(crew.watch_ids.length) throw new Error('Reassign watches before removing this crew');
+  const ids=new Set(privacyGroups(site).flat().map(c=>c.id));
+  site.crews=site.crews.filter(c=>c.id!==crewId);
+  site.events=site.events.filter(e=>e.crew_id!==crewId);
+  if(site.crews.length&&ids.has(crewId)) snapshot(state,siteId); // refresh derived grouping caches
+}
 export function assignWatch(state:State,siteId:string,crewId:string,workerName:string,watchId:string):Assignment {
   const site=siteFor(state,siteId),crew=crewFor(site,crewId); workerName=text(workerName,'Worker name'); watchId=text(watchId,'Watch ID',64);
   if(Object.values(state.sites).some(s=>s.assignments.some(a=>a.watch_id.toLowerCase()===watchId.toLowerCase()))) throw new Error('Watch already has an active assignment');

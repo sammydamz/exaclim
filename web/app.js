@@ -7,7 +7,7 @@ import { agent, onAction, inputValue, setInput, setSelect, escapeHTML as esc, ic
 
 globalThis.exaclim = Object.freeze({ agent });
 const $ = selector => document.querySelector(selector);
-const state = {user:null, site:'accra', snapshot:null, offline:false, busy:false, epoch:0, day:'today', hour:null, forecastSignature:'', emergencySignature:'', siteSignature:'', setup:null, ackErrors:new Map(), pendingAcks:new Set()};
+const state = {user:null, site:'accra', snapshot:null, offline:false, busy:false, epoch:0, day:'today', hour:null, forecastSignature:'', emergencySignature:'', siteSignature:'', setup:null, ackErrors:new Map(), pendingAcks:new Set(), editingCrew:null};
 let toastTimer;
 const scenarios = [
   ['normal','Routine shift','Refresh readings for a routine shift.'],
@@ -237,7 +237,7 @@ function renderSetup(data) {
   const site=data.site || state.snapshot?.site || {};
   setInput('setup-site-name',site.name || '');setInput('setup-latitude',String(site.latitude ?? ''));setInput('setup-longitude',String(site.longitude ?? ''));setInput('setup-timezone',site.timezone || 'Africa/Accra');
   const crews=data.crews || [];
-  $('#setup-crews').innerHTML=crews.length?crews.map(crew=>`<div class="admin-row"><strong>${esc(crew.name)}</strong><small>${esc(crew.count ?? crew.worker_count ?? crew.expected_workers ?? 0)} expected workers</small></div>`).join(''):'<div class="setup-info">No crews yet. Create your first crew below.</div>';
+  $('#setup-crews').innerHTML=crews.length?crews.map(crew=>`<div class="admin-row"><div><strong>${esc(crew.name)}</strong><small>${esc(crew.count ?? crew.worker_count ?? crew.expected_workers ?? 0)} expected workers</small></div><div class="crew-admin-actions"><ui-button><button class="text-button edit-crew" data-crew-id="${esc(crew.id)}" data-crew-name="${esc(crew.name)}" data-crew-count="${esc(crew.count)}" aria-label="Edit ${esc(crew.name)}">Edit</button></ui-button><ui-button><button class="text-button remove-crew" data-crew-id="${esc(crew.id)}" data-crew-name="${esc(crew.name)}" aria-label="Remove ${esc(crew.name)}">Remove</button></ui-button></div></div>`).join(''):'<div class="setup-info">No crews yet. Create your first crew below.</div>';
   setSelect('assignment-crew',crews.map(crew=>({value:String(crew.id),label:crew.name})),crews[0]?.id);
   $('#setup-assignments').innerHTML=(data.assignments || []).map(item=>`<div class="admin-row"><div><strong>${esc(item.worker_name || 'Unassigned')}</strong><br><small>${esc(crews.find(crew=>crew.id===item.crew_id)?.name || item.crew_name || item.crew_id)}</small></div><small>${esc(item.watch_id)}</small></div>`).join('') || '<div class="setup-info">No watch assignments yet.</div>';
 }
@@ -257,6 +257,31 @@ function wireActions() {
   onAction('#fill-demo',()=>{setInput('login-email','demo@exaclim.test');setInput('login-password','Exaclim2026!');});
   onAction('#submit-login',signIn);
   $('#login-form').addEventListener('submit',event=>event.preventDefault());
+  onAction('#create-site',async()=>{
+    const form=$('#site-create-form');if(!form.reportValidity())return;
+    $('#site-create-error').textContent='';
+    try {
+      const result=await api('/api/v1/sites',{name:inputValue('new-site-name'),latitude:Number(inputValue('new-site-latitude')),longitude:Number(inputValue('new-site-longitude')),timezone:inputValue('new-site-timezone')});
+      state.user.site_ids=[...new Set([...(state.user?.site_ids||[]),result.site.id])];
+      setInput('new-site-name','');$('#toast').hidden=false;notify(`Site "${result.site.name}" created. Select it from the switcher.`);
+      await loadSetup();await refreshDashboard();
+    } catch(error){$('#site-create-error').textContent=`Not saved: ${error.message}`;}
+  });
+  $('#site-create-form').addEventListener('submit',event=>event.preventDefault());
+  $('#setup-crews').addEventListener('click',async event=>{
+    const button=event.target.closest('button');
+    if(!button)return;
+    if(button.classList.contains('edit-crew')) {
+      setInput('new-crew-name',button.dataset.crewName||'');setInput('new-crew-count',button.dataset.crewCount||'3');
+      state.editingCrew=button.dataset.crewId;$('#crew-form-title').textContent=`Edit crew: ${button.dataset.crewName}`;
+      $('#cancel-crew-edit').hidden=false;
+    } else if(button.classList.contains('remove-crew')) {
+      $('#crew-error').textContent='';
+      try {await api(`/api/v1/sites/${encodeURIComponent(state.site)}/crews/${encodeURIComponent(button.dataset.crewId)}`,{},'DELETE');notify('Crew removed');await loadSetup();await refreshDashboard();}
+      catch(error){$('#crew-error').textContent=`Not removed: ${error.message}`;}
+    }
+  });
+  onAction('#cancel-crew-edit',()=>{state.editingCrew=null;setInput('new-crew-name','');setInput('new-crew-count','3');$('#crew-form-title').textContent='New crew';$('#cancel-crew-edit').hidden=true;$('#crew-error').textContent='';});
   onAction('#sign-out',async()=>{
     try{await api('/api/v1/auth/logout',{});clearAuthenticated();notify('Signed out.');}
     catch(error){notify(`Sign out not confirmed: ${error.message}`);}
@@ -267,7 +292,14 @@ function wireActions() {
   $('#site-select').addEventListener('valuechange',event=>changeSite(event.detail.value));
   $('#forecast-tabs').addEventListener('valuechange',event=>{state.day=event.detail.value;state.hour=null;renderForecast(true);});
   onAction('#save-site',()=>saveForm('#site-form','#site-error',`/api/v1/sites/${encodeURIComponent(state.site)}`,()=>({name:inputValue('setup-site-name'),latitude:Number(inputValue('setup-latitude')),longitude:Number(inputValue('setup-longitude')),timezone:inputValue('setup-timezone')}),'PATCH','Site details saved'));
-  onAction('#create-crew',()=>saveForm('#crew-form','#crew-error',`/api/v1/sites/${encodeURIComponent(state.site)}/crews`,()=>({name:inputValue('new-crew-name'),count:Number(inputValue('new-crew-count'))}),'POST','Crew created'));
+  onAction('#create-crew',async()=>{
+    const editing=state.editingCrew;
+    if(editing) {
+      $('#crew-error').textContent='';
+      try {await api(`/api/v1/sites/${encodeURIComponent(state.site)}/crews/${encodeURIComponent(editing)}`,{name:inputValue('new-crew-name'),count:Number(inputValue('new-crew-count'))},'PATCH');notify('Crew updated');state.editingCrew=null;setInput('new-crew-name','');setInput('new-crew-count','3');$('#crew-form-title').textContent='New crew';$('#cancel-crew-edit').hidden=true;await loadSetup();await refreshDashboard();}
+      catch(error){$('#crew-error').textContent=`Not saved: ${error.message}`;}
+    } else await saveForm('#crew-form','#crew-error',`/api/v1/sites/${encodeURIComponent(state.site)}/crews`,()=>({name:inputValue('new-crew-name'),count:Number(inputValue('new-crew-count'))}),'POST','Crew created');
+  });
   onAction('#save-assignment',()=>saveForm('#assignment-form','#assignment-error',`/api/v1/sites/${encodeURIComponent(state.site)}/assignments`,()=>({crew_id:inputValue('assignment-crew'),worker_name:inputValue('assignment-name'),watch_id:inputValue('assignment-watch')}),'POST','Watch assignment saved'));
   ['#site-form','#crew-form','#assignment-form'].forEach(id=>$(id).addEventListener('submit',event=>event.preventDefault()));
   const list=$('#demo-scenarios');

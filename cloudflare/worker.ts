@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
 import type { Context } from 'hono';
-import { initialState, snapshot, addCrew, addSite, assignWatch, scenario, acknowledge, recordWeather, type State, type WeatherCache } from './domain';
+import { initialState, snapshot, addCrew, addSite, assignWatch, renameCrew, removeCrew, scenario, acknowledge, recordWeather, type State, type WeatherCache } from './domain';
 
 export interface Bindings { DB:D1Database; ASSETS:Fetcher; EXACLIM_MODE:string }
 type User={id:string;email:string;name:string;site_ids:string[]};
@@ -146,12 +146,26 @@ app.patch('/api/v1/sites/:id',async c=>{
  const id=c.req.param('id');await user(c,id);const data=await body(c,['name','latitude','longitude','timezone']);
  const result=await update(c.env.DB,state=>{const current=site(state,id),changed={...summary(current),...data};validated(()=>{const temporary:State={schema_version:1,sites:{}};addSite(temporary,changed.name as string,changed.latitude as number,changed.longitude as number,changed.timezone as string);});Object.assign(current,{name:(changed.name as string).trim(),latitude:changed.latitude,longitude:changed.longitude,timezone:changed.timezone});return summary(current);});return c.json({site:result,ok:true});
 });
+app.post('/api/v1/sites',async c=>{
+  const u=await user(c),data=await body(c,['name','latitude','longitude','timezone']);
+  const created=await update(c.env.DB,state=>validated(()=>addSite(state,data.name as string,data.latitude as number,data.longitude as number,data.timezone as string)));
+  await c.env.DB.prepare('INSERT OR IGNORE INTO user_sites VALUES(?,?)').bind(u.id,created.id).run();
+  return c.json({site:summary(created),ok:true},201);
+});
 app.post('/api/v1/sites/:id/:operation',async c=>{
  const id=c.req.param('id'),op=c.req.param('operation');if(!['crews','assignments','simulate'].includes(op))return fail(404,'not_found','Endpoint not found.');const u=await user(c,id);
  if(op==='crews'){const d=await body(c,['name','count']);const crew=await update(c.env.DB,s=>{site(s,id);return validated(()=>addCrew(s,id,d.name as string,d.count as number));});return c.json({crew,...crew},201);}
  if(op==='assignments'){const d=await body(c,['crew_id','worker_name','watch_id']);const assignment=await update(c.env.DB,s=>{site(s,id);return validated(()=>assignWatch(s,id,d.crew_id as string,d.worker_name as string,d.watch_id as string));});return c.json({assignment,...assignment},201);}
  const d=await body(c,['scenario']);if(typeof d.scenario!=='string')return fail(422,'scenario','Choose a named synthetic scenario.');if(!['normal','rising-heat','connection-lost','reconnect','help','delayed-help','resolve-help'].includes(d.scenario))return fail(422,'validation','Unknown scenario');
  const result=await update(c.env.DB,s=>{site(s,id);validated(()=>scenario(s,id,d.scenario as string));return dashboard(s,id,u);});return c.json({ok:true,scenario:d.scenario,dashboard:result});
+});
+app.patch('/api/v1/sites/:id/crews/:crewId',async c=>{
+  const id=c.req.param('id'),crewId=c.req.param('crewId');await user(c,id);const d=await body(c,['name','count']);
+  const crew=await update(c.env.DB,s=>{site(s,id);return validated(()=>renameCrew(s,id,crewId,d.name as string,d.count as number));});return c.json({crew,ok:true});
+});
+app.delete('/api/v1/sites/:id/crews/:crewId',async c=>{
+  const id=c.req.param('id'),crewId=c.req.param('crewId');await user(c,id);await body(c,[]);
+  await update(c.env.DB,s=>{site(s,id);return validated(()=>{removeCrew(s,id,crewId);});});return c.json({ok:true});
 });
 app.post('/api/v1/emergencies/:id/ack',async c=>{
  const u=await user(c);await body(c,[]);const id=c.req.param('id');const event=await update(c.env.DB,s=>{const owner=Object.values(s.sites).find(site=>site.events.some(e=>e.id===id));if(!owner)return fail(404,'event_not_found','Help event not found.');if(!u.site_ids.includes(owner.id))return fail(403,'site_forbidden','This supervisor cannot access the requested site.');return validated(()=>acknowledge(s,id,u.name));});return c.json({ok:true,id:event.id,acknowledged:true,acknowledged_at:event.acknowledged_at,acknowledged_by:event.acknowledged_by,watch_state_cleared:false});

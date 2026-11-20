@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initialState,snapshot,addSite,addCrew,assignWatch,scenario,acknowledge,recordWeather } from '../cloudflare/domain.ts';
+import { initialState,snapshot,addSite,addCrew,assignWatch,renameCrew,removeCrew,scenario,acknowledge,recordWeather } from '../cloudflare/domain.ts';
 import type { State } from '../cloudflare/domain.ts';
 const NOW='2026-11-19T10:00:00Z';
 const later=(seconds:number)=>new Date(Date.parse(NOW)+seconds*1000);
@@ -87,6 +87,22 @@ test('validation rejects malformed values and watch IDs are unique across sites'
  for(const count of [0,21,true,'3'])assert.throws(()=>addCrew(state,'tema','Bad',count as number));
  assert.throws(()=>assignWatch(state,'tema',crew.id,'Name','demo-001'));assert.throws(()=>addCrew(state,'tema','NEW CREW',3));
  assert.throws(()=>addSite(state,'Bad',Infinity,0,'Africa/Accra'));assert.throws(()=>addSite(state,'Bad',0,0,'Not/AZone'));assert.throws(()=>scenario(state,'accra','invalid',NOW));assert.throws(()=>acknowledge(state,'missing'));assert.throws(()=>snapshot(state,'accra','2026-11-19T10:00:00'));assert.throws(()=>snapshot(state,'__proto__',NOW));
+});
+test('new sites are isolated and crew rename/remove enforce assignment safety',()=>{
+ const state=initialState(NOW),created=addSite(state,'Kumasi Yard',6.7,-1.6,'Africa/Accra');
+ assert.ok(created.id!=='accra'&&state.sites[created.id].crews.length===0);
+ const empty=snapshot(state,created.id,NOW);assert.deepEqual(empty.groups,[]);
+ assert.equal(snapshot(state,created.id,NOW).forecast.source_type,'synthetic');
+ const crew=addCrew(state,created.id,'Paving',3);assignWatch(state,created.id,crew.id,'Worker A','KUM-1');assignWatch(state,created.id,crew.id,'Worker B','KUM-2');
+ assert.throws(()=>renameCrew(state,created.id,crew.id,'Paving',0));
+ assert.throws(()=>renameCrew(state,created.id,crew.id,'Paving crew',1),'count below assigned watches');
+ renameCrew(state,created.id,crew.id,'Paving crew',5);
+ assert.equal(state.sites[created.id].crews[0].count,5);
+ assert.throws(()=>removeCrew(state,created.id,crew.id));
+ const before=snapshot(state,created.id,NOW).groups.length;
+ removeCrew(state,created.id,addCrew(state,created.id,'Empty',3).id);
+ assert.equal(state.sites[created.id].crews.length,1);
+ assert.equal(snapshot(state,created.id,NOW).groups.length,before);
 });
 test('JSON round-trip reproduces state and Tema starts empty',()=>{
  const state=initialState(NOW);assert.deepEqual(snapshot(JSON.parse(JSON.stringify(state)),'accra',NOW),snapshot(state,'accra',NOW));
