@@ -17,3 +17,11 @@ The managed environment requires an HTTPS proxy. The HTTP checker uses an explic
 Tests used synthetic accounts and modified demo state. The site name and normal scenario were restored afterward; synthetic setup and acknowledged event history remain persisted in D1. Screenshot evidence reflects test-time data and freshness.
 
 These executed checks cover part of the PRD acceptance plan. They do not establish all 48 planned cases, physical watch delivery, clinical accuracy, field usability or production identity management. See the PRD and demo runbook for those boundaries.
+
+## Interface copy and library component update
+
+20 November 2026: replaced custom main, crew, recommendation and emergency card surfaces with Web Awesome `wa-card`; status badges and the account avatar also use Web Awesome. UI SDK continues to own interactive controls. Removed repeated demo notices, em dashes, slogans and visible policy identifiers. A single “Sample forecast” source label remains. Stale readings, group privacy and help acknowledgement behavior remain visible. Setup now finishes loading before opening, preventing an in-flight response from overwriting edits.
+
+`npm test` passed 72 tests (exit 0). `npm run test:browser` passed all 25 checks (exit 0), including library card registration, concise copy, mobile layout, setup persistence and emergency flows. Strict Cloudflare TypeScript checking passed (exit 0). Updated screenshots and results: `docs/evidence/ui-copy-refresh/`.
+
+Updated Cloudflare deployment version: `3d623cb1-c421-4c25-ab91-a33caa465249`. `npm run deploy` completed with exit 0.

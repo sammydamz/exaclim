@@ -1,3 +1,7 @@
+import '@awesome.me/webawesome/dist/styles/themes/default.css';
+import '@awesome.me/webawesome/dist/components/card/card.js';
+import '@awesome.me/webawesome/dist/components/badge/badge.js';
+import '@awesome.me/webawesome/dist/components/avatar/avatar.js';
 import '@ui-sdk/web/button';
 import '@ui-sdk/web/tabs';
 import '@ui-sdk/web/field';

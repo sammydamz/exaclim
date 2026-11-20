@@ -8,7 +8,7 @@ Sign in: **demo@exaclim.test** / **Exaclim2026!**. Use fictional data only.
 
 ## Stack and run
 
-The deployed API uses **Hono + TypeScript + Cloudflare Workers + D1**. Workers assets serve the Vite frontend. Components and interactions use matching versions of `@ui-sdk/core` and `@ui-sdk/web`, with a Deel-inspired visual treatment. Deployment uses the new **cf CLI**.
+The deployed API uses **Hono + TypeScript + Cloudflare Workers + D1**. Workers assets serve the Vite frontend. Components and interactions use matching versions of `@ui-sdk/core` and `@ui-sdk/web`, with a Deel-inspired visual treatment. Cards, status badges and the avatar use Web Awesome library components; custom card components are prohibited. Deployment uses the new **cf CLI**.
 
 ```sh
 npm ci

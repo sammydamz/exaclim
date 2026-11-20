@@ -125,10 +125,16 @@ def main():
                 headings = page.locator('#dashboard h2').all_text_contents()
                 assert headings == ['Heat forecast', 'Crew status', 'Breaks & rotation'], headings
                 assert page.locator('#badge-device, #worker-form, #event-log').count() == 0
-                passed('Core screen contains exactly three specified areas and no worker analytics', ['QA44'])
+                assert page.locator('wa-card.card').count() == 3
+                assert page.locator('#crew-list > wa-card').count() > 0
+                assert page.locator('#suggestions-list > wa-card').count() > 0
+                assert page.evaluate("customElements.get('wa-card') !== undefined")
+                assert '—' not in page.locator('#dashboard').inner_text()
+                assert 'synthetic-dashboard-v1' not in page.locator('#suggestions-list').inner_text()
+                passed('Core screen uses library cards, concise copy and the three specified areas', ['QA44'])
 
-                expect(page.locator('.mode-note')).to_contain_text('Synthetic')
-                expect(page.locator('#forecast-provenance')).to_contain_text('ynthetic')
+                expect(page.locator('.mode-note')).to_contain_text('Scenarios')
+                expect(page.locator('#forecast-provenance')).to_contain_text('Sample forecast')
                 expect(page.locator('#site-timezone')).to_contain_text('Accra')
                 passed('Synthetic source and site timezone are visible in another browser timezone', ['QA01', 'QA02', 'QA42'])
 
@@ -162,7 +168,7 @@ def main():
                 expect(page.locator('#suggestions-list')).not_to_be_empty()
                 expect(page.locator('#suggestions-list')).not_to_contain_text('[object Object]')
                 expect(page.locator('#risk-window')).to_contain_text(re.compile(r'\d{2}:\d{2}'))
-                expect(page.locator('.section-footnote').filter(has_text='Advice')).to_contain_text('supervisor decides')
+                expect(page.locator('.section-footnote').filter(has_text='Supervisor')).to_contain_text('Supervisor decides')
                 passed('Forecast windows are readable and suggestions are advice, not recorded adherence', ['QA03', 'QA14', 'QA15'])
 
                 capture(page, 'dashboard-1440.png')
