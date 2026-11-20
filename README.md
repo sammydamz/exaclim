@@ -1,83 +1,54 @@
 # Exaclim
 
-Worker heat-risk research prototype for the Climate-Resilient Worker Health challenge. The crew dashboard and private badge simulator use explicitly synthetic data.
+Supervisor heat-risk dashboard for the Climate-Resilient Worker Health challenge.
 
-Frontend components and interactions are built on **`@ui-sdk/core` with `@ui-sdk/web`**, pinned to the same version. Vite bundles the frontend; the Python standard-library service provides the scenario API and serves the build.
+Live synthetic demo: https://exaclim.kasalite-business.workers.dev
 
-This is an illustrative workflow demonstrator, not a validated occupational safety instrument. The index is not WBGT, core temperature, a safe work allowance or a medical prediction.
+Sign in: **demo@exaclim.test** / **Exaclim2026!**. Use fictional data only.
 
-## Setup and run
+## Stack and run
 
-Requires Node.js 22.12+ and Python 3.12+. Use the existing checkout.
+The deployed API uses **Hono + TypeScript + Cloudflare Workers + D1**. Workers assets serve the Vite frontend. Components and interactions use matching versions of `@ui-sdk/core` and `@ui-sdk/web`, with a Deel-inspired visual treatment. Deployment uses the new **cf CLI**.
 
 ```sh
-cd /workspace/exaclim
 npm ci
-npm run build
-npm start
+npm run cloudflare:dev
 ```
 
-The Python server binds to loopback port 8000. Use a local development browser; no public deployment is configured. Never enter real worker data.
-
-For frontend development, leave the Python service running and start Vite in another terminal:
+Open http://127.0.0.1:8787. Use Node 24.22+ (the verified environment uses 24.22.1). Cloudflare setup, persistence and deployment details are in [the deployment guide](docs/demo/cloudflare.md).
 
 ```sh
-npm run dev
+npm run cloudflare:check
+npm run deploy
 ```
 
-Vite runs on port 5173 and proxies `/api` to the Python service. A production-style run uses `npm run build` followed by `npm start`.
+Authentication must already be configured for your Cloudflare account. The scripts use `XDG_CONFIG_HOME=/workspace/.config`; adjust this path for another machine. Never commit Cloudflare credentials.
 
-## UI foundation
+## Dashboard behavior
 
-- Component registration and shared helpers: `web/components/ui.js`.
-- Application markup: `web/index.html`.
-- Scenario/API orchestration: `web/app.js`.
-- Shared UI SDK theme tokens and Exaclim layout: `web/styles.css`.
-- UI SDK handles tabs, button actions/pending state, number fields, selects, checkbox, switch, meter, and the reset alert dialog.
-- `exaclim.agent` exposes the SDK bridge in the browser for local component inspection and tests. No model or external agent service is connected automatically.
+The supervisor view contains today's/tomorrow's forecast, privacy-grouped crew status and break/rotation suggestions. Setup supports sites, crews and synthetic watch assignment. Demo controls exercise rising heat, stale connections, reconnect, help and delayed delivery.
 
-Read `AGENTS.md` and the installed SDK skill before changing components. Import each component from its own entry. Use SDK `action` / `valuechange` / `checkedchange` events and controller APIs rather than hand-written interaction roles.
+Routine groups require at least three contributors; smaller crews are combined without overlapping members. Named help is the identity exception. Acknowledgement removes the pending banner only after a durable server receipt, and retains the unresolved group's Red state. Offline help delivery is simulated through a persisted outbox. Stale readings remain cautious.
 
-## Validation
+All forecasts, workers, watches and delivery events are synthetic. The illustrative model is not WBGT, core temperature, a clinical prediction or a validated safe work allowance. Physical watches, Bluetooth integration, native gateway, live weather, reviewed translations and clinical validation remain outside this demo. R2 is not provisioned because this version has no uploaded-file workflow.
+
+## Source and checks
+
+- `index.html`, `web/app.js`, `web/styles.css`, `web/components/ui.js`: frontend.
+- `cloudflare/worker.ts`: Hono routes, authentication, D1 and asset delivery.
+- `cloudflare/domain.ts`: privacy grouping, synthetic forecasting and alert behavior.
+- `cloudflare.config.ts`: cf deployment and resource bindings.
+- `exaclim/`: Python reference implementation and original research engine; Python is not deployed.
 
 ```sh
 npm test
+npm run test:cloudflare-domain
+python3 scripts/check_cloudflare.py --base-url http://127.0.0.1:8787
+python3 scripts/check_dashboard_v1.py --base-url http://127.0.0.1:8787 --backend-label 'Hono + Workers + D1'
 ```
 
-This builds the UI and runs 23 Python unit/integration tests. The backend implementation lives in `exaclim/`.
+Browser checks require `requirements-browser.txt` and Chromium. The harness can also start the Python reference server with `npm run test:browser`. Read `AGENTS.md` before interface changes.
 
-Real-browser validation requires the optional Playwright dependency and Chromium (`/usr/bin/chromium` in this environment):
+## Reports
 
-```sh
-python3 -m pip install -r requirements-browser.txt
-npm run test:browser
-```
-
-The browser script manages its own temporary server. It checks actual scenario flows, emergency retention, offline/reconnection behavior, dialog cancel/confirm/focus, SDK keyboard navigation, required fields, SDK agent actions, contrast tokens and phone layout.
-
-## Demonstration boundaries
-
-- Crew counts are independent synthetic fixtures, suppressed below five workers. They do not aggregate the private badge sessions.
-- Badge sessions use a random HttpOnly, SameSite cookie. State lives in server memory and expires after eight hours of inactivity. This is not production authentication or authorization.
-- Help latches emergency state. Acknowledgement or cooler inputs cannot clear it. The reset dialog clears only the synthetic session; it does not resolve a real incident.
-- The open page demonstrates offline fallback and pending-help retries. It is not an offline-installable PWA or badge firmware. Server restarts and cookie loss lose server session state.
-- Forecast defaults to a labeled fixture. `/api/forecast?mode=live` attempts Open-Meteo and explicitly labels synthetic fallback when unavailable. Current managed networking blocks live access. Adapter tests use mocked responses; no live-data success is claimed.
-- English and draft French messages are implemented. Reviewed Twi, voice, SMS, physical devices, a trained personal heat-strain model and clinical validation are not implemented.
-- UI SDK uses runtime layout styles, so the local server's CSP permits inline styles while keeping scripts restricted to local bundles. Do not treat this demonstration as deployment hardening.
-
-## Reports and PDFs
-
-Editable job reports are in `docs/jobs/`, with validation evidence in `docs/evidence/`.
-
-```sh
-python3 -m pip install -r requirements-pdf.txt
-python3 scripts/export_pdfs.py --output /workspace/artifacts/exaclim-jobs
-```
-
-PDF dependencies are independent of the application. Supplier budget figures remain internal allowances, not verified quotes. Project licensing has not been selected; UI SDK's own license remains with its package. Open-Meteo data requires attribution and its current usage terms apply.
-
-## Supervisor Dashboard V1 planning
-
-The new target specification is in [docs/dashboard-v1](docs/dashboard-v1/README.md): a full PRD, 27 engineering jobs, 48 planned acceptance cases, editable CSV/JSON sheets and requirement traceability. Download the [PDF and editable planning pack](downloads/dashboard-v1/Exaclim-Dashboard-PRD-Tasks-QA.zip).
-
-This is a target build plan, not a claim that the existing prototype already implements it. The new source specifies supervisor-only operation, watch/shared-phone connectivity, three-person privacy grouping and named emergency acknowledgement. Current implementation behavior and the separately executed baseline tests remain documented above.
+The [PRD, engineering sheet and planned acceptance cases](docs/dashboard-v1/README.md) define the target. Executed software checks cover part of that plan; they do not establish physical-device or field validation. Research reports are in `docs/jobs/`; demo guidance is in `docs/demo/`. Supplier budget figures remain allowances rather than verified quotes.

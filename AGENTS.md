@@ -4,7 +4,7 @@ Use the existing checkout; do not create worktrees unless requested. The product
 
 Frontend components and interactions use `@ui-sdk/core` with the same-version `@ui-sdk/web` adapter. Before UI changes, follow `node_modules/@ui-sdk/core/skills/ui-sdk/SKILL.md` and the installed Web Components documentation. Read only relevant component pages. Do not hand-roll controls the SDK provides. Keep reusable parts in `web/components/`, and preserve synthetic-data labels and emergency priority.
 
-Run `npm ci`, `npm test`, and, for interface changes, `npm run test:browser`. Python backend is in `exaclim/`. The frontend is built with Vite into ignored `dist/`, which the local Python server serves. Do not check in node_modules, generated caches, or real worker information.
+Run `npm ci`, `npm test`, and, for interface changes, `npm run test:browser`. The deployed backend is Hono + TypeScript in `cloudflare/`, running on Workers with D1 via the new cf CLI. Python in `exaclim/` is a local reference. Run `npm run test:cloudflare-domain` and type checking for deployed API changes. Frontend entry is root `index.html`; Vite builds local assets into ignored `dist/`. Do not check in node_modules, generated caches, or real worker information.
 
 ## Deel-inspired design reference
 
