@@ -3,9 +3,10 @@ import '@fontsource/inter/latin-500.css';
 import '@fontsource/inter/latin-600.css';
 import '@fontsource/inter/latin-700.css';
 import './styles.css';
-import { agent, onAction, inputValue, setInput, setSelect, escapeHTML as esc, icon } from './components/ui.js';
+import { agent, onAction, inputValue, setInput, setSelect, escapeHTML as esc, icon, mountIcons } from './components/ui.js';
 
 globalThis.exaclim = Object.freeze({ agent });
+mountIcons();
 const $ = selector => document.querySelector(selector);
 const state = {user:null, site:'accra', snapshot:null, offline:false, busy:false, epoch:0, day:'today', hour:null, forecastSignature:'', emergencySignature:'', siteSignature:'', setup:null, ackErrors:new Map(), pendingAcks:new Set(), editingCrew:null, streamLive:false};
 let toastTimer;

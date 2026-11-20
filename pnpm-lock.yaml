@@ -23,6 +23,9 @@ importers:
       hono:
         specifier: 4.13.19
         version: 4.13.19
+      lucide:
+        specifier: ^1.76.0
+        version: 1.76.0
     devDependencies:
       '@cloudflare/vite-plugin':
         specifier: 2.0.0-rc.2
@@ -805,6 +808,9 @@ packages:
   lit@3.3.3:
     resolution: {integrity: sha512-fycuvZg/hkpozL00lm1pEJH5nN/lr9ZXd6mJI2HSN4+Bzc+LDNdEApJ6HFbPkdFNHLvOplIIuJvxkS4XUxqirw==}
 
+  lucide@1.76.0:
+    resolution: {integrity: sha512-70XF2WJ156zj40BnibNXNnE9yq5Cf8tegPRgiryAXQHOZXBZV66jqqFluT+Td1weQNrhkURr/cQum2ReAJsydg==}
+
   marked@11.2.0:
     resolution: {integrity: sha512-HR0m3bvu0jAPYiIvLUUQtdg1g6D247//lvcekpHO1WMvbwDlwSkZAX9Lw4F4YHE1T0HaaNve0tuAWuV1UJ6vtw==}
     engines: {node: '>= 18'}
@@ -1586,6 +1592,8 @@ snapshots:
       '@lit/reactive-element': 2.1.2
       lit-element: 4.2.2
       lit-html: 3.3.3
+
+  lucide@1.76.0: {}
 
   marked@11.2.0: {}
 
