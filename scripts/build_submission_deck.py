@@ -55,6 +55,40 @@ def note(s,n,body):
 def label_block(s,x,y,w,title,body,h=1.0):
  text(s,x,y,w,.27,title,14,True,ACCENT);text(s,x,y+.34,w,h-.34,body,13.5)
 
+# Single-stroke pictograms drawn as editable PowerPoint paths on a 24-unit grid.
+PICTOGRAMS = {
+ 'monitor': [[(2,3),(22,3),(22,17),(2,17),(2,3)],[(12,17),(12,21)],[(7,21),(17,21)]],
+ 'check': [[(3,12),(9,18),(21,5)]],
+ 'phone': [[(7,2),(17,2),(18,3),(18,21),(17,22),(7,22),(6,21),(6,3),(7,2)],[(10,18),(14,18)]],
+ 'watch': [[(8,7),(8,2),(16,2),(16,7)],[(8,17),(8,22),(16,22),(16,17)],[(6,7),(18,7),(18,17),(6,17),(6,7)]],
+ 'shield': [[(12,2),(21,6),(20,14),(17,19),(12,22),(7,19),(4,14),(3,6),(12,2)],[(8,11),(11,14),(16,9)]],
+ 'battery': [[(2,7),(20,7),(20,17),(2,17),(2,7)],[(22,10),(22,14)],[(6,10),(6,14)],[(10,10),(10,14)]],
+ 'chart': [[(3,2),(3,21),(22,21)],[(7,16),(12,10),(16,12),(22,5)]],
+}
+def panel(slide,x,y,w,h,fill):
+ sh=slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(x), Inches(y), Inches(w), Inches(h))
+ sh.adjustments[0]=.09
+ sh.fill.solid()
+ sh.fill.fore_color.rgb=col(fill)
+ sh.line.fill.background()
+ sh._element.spPr.append(OxmlElement('a:effectLst'))
+
+def card(slide,x,y,w,h,icon,title,body,fill=BEIGE):
+ panel(slide,x,y,w,h,fill)
+ dark=fill=='174C47'
+ foreground=WHITE if dark else INK
+ accent=WHITE if dark else ACCENT
+ for path in PICTOGRAMS[icon]:
+  points=[(Inches(x+.18+.016*px), Inches(y+.15+.016*py)) for px,py in path]
+  builder=slide.shapes.build_freeform(*points[0])
+  builder.add_line_segments(points[1:],close=False)
+  stroke=builder.convert_to_shape()
+  stroke.fill.background()
+  stroke.line.color.rgb=col(accent)
+  stroke.line.width=Pt(1.45)
+ text(slide,x+.68,y+.18,w-.87,.31,title,15,True,foreground)
+ text(slide,x+.20,y+.65,w-.40,h-.71,body,12.6,False,foreground)
+
 def table(s,x,y,width,headers,rows,colwidths,font=12.5,row_h=.55):
  shape=s.shapes.add_table(len(rows)+1,len(headers),Inches(x),Inches(y),Inches(width),Inches(row_h*(len(rows)+1)));t=shape.table
  for i,cw in enumerate(colwidths):t.columns[i].width=Inches(cw)
@@ -95,9 +129,9 @@ note(s,1,'Project: Exaclim. Team name and size intentionally left blank at the u
 
 s=clear_body(3,'Team capability summary','What the team has built, tested and identified for field review.')
 cap_start = len(s.shapes)
-label_block(s,.45,1.93,4.25,'Delivered','The supervisor dashboard runs on Cloudflare Workers. A Hono API written in TypeScript stores crews and help acknowledgements in D1.',1.65)
-label_block(s,5.05,1.93,4.35,'Tested','Automated domain, API and browser checks cover crew privacy and help response. The repository includes the hardware design and pilot plan.',1.65)
-label_block(s,.45,3.66,8.9,'Before a field pilot','The Android and watch connection is simulated. Next steps are hardware qualification, Android background BLE testing, occupational-health and local-language review, and site recruitment.',1.2)
+card(s,.4,1.82,4.5,1.64,'monitor','Delivered','A supervisor dashboard and Hono API run on Cloudflare Workers. D1 stores crews, help requests and acknowledgements.','174C47')
+card(s,5.04,1.82,4.54,1.64,'check','Tested','Domain, API and browser checks cover crew privacy and help response. The repository includes hardware and pilot plans.')
+card(s,.4,3.60,9.18,1.42,'watch','Before a field pilot','The watch and Android link is simulated. Next steps include hardware and background BLE testing, occupational-health and language review, and site recruitment.','F4F0E9')
 cap = ' '.join(shape.text for shape in list(s.shapes)[cap_start:] if shape.has_text_frame)
 assert len(cap) <= 1000
 note(s,3,f'Capability answer: {len(cap)} characters, below the 1,000-character limit. No member biographies, degrees, employment history, partnerships or approvals were supplied; none is invented. Team members slide is left untouched. Evidence: docs/demo/verification.md; docs/design/emil-review.md; docs/dashboard-v1/04-implementation-audit.md. Hosted release at preparation: 7c4c7a8, Cloudflare version 7409edd8-bd47-40cf-840b-a2a2987b7bc3. New operational modules in the working tree are not counted as released.')
@@ -119,10 +153,10 @@ arrow(s,1.42,3.66,1.42,3.11)
 note(s,4,'The worker requests help on the watch. The shared Android gateway queues the request and forwards it to the site API. The supervisor acknowledges receipt, and D1 keeps the request and acknowledgement. Routine crew summaries require three contributors. Clothing and acclimatization settings stay on the watch.')
 
 s=clear_body(5,'Target users and intended outcome','Initial use case: outdoor construction crews in the Accra area, Ghana.')
-label_block(s,.45,1.91,4.25,'Supervisor','See today’s and tomorrow’s heat windows, check crew-level status and plan heavier tasks, breaks and rotation.',1.21)
-label_block(s,5.05,1.91,4.3,'Worker','Receive simple graded warnings and request help without requiring every worker to own a smartphone.',1.21)
-label_block(s,.45,3.41,4.25,'Crew lead / site responder','Carry the shared Android phone, check device readiness and follow the site’s existing emergency procedure.',1.3)
-label_block(s,5.05,3.41,4.3,'Intended outcome','Earlier recognition and clearer action, with routine individual exposure kept out of the supervisor view.',1.3)
+card(s,.4,1.80,5.15,1.48,'monitor','Supervisor','Check the two-day heat forecast and crew status. Plan heavier work, breaks and rotation.','174C47')
+card(s,5.69,1.80,3.89,1.48,'watch','Worker','Receive graded warnings and request help from the watch.')
+card(s,.4,3.41,5.15,1.48,'phone','Crew lead or site responder','Carry the shared Android phone, check devices and follow the site emergency procedure.','F4F0E9')
+card(s,5.69,3.41,3.89,1.48,'shield','Intended outcome','Recognize risk earlier while keeping individual exposure private.')
 text(s,.45,5.00,8.9,.23,'Construction first. Logistics and commercial farms require separate site and worker validation.',10.5,False,MUTED)
 note(s,5,'The primary dashboard role is supervisor; crew lead and responder are operational responsibilities, not extra analytics portals. Ghana is the proposed first setting, not a confirmed pilot partner or exclusive market. English is currently implemented; Twi or another language requires worker-led selection and fluent-speaker review. Intended benefits are hypotheses: no measured reduction in illness, injury or lost work is claimed. Source context: WHO/WMO [1]; prevention actions: NIOSH [2,3].')
 
@@ -163,11 +197,10 @@ table(s,.42,1.86,9.15,['Risk','Safeguard / response'],[
 note(s,9,'Currently implemented safeguards include scope checks, bounded allowlisted requests, session protections, no-store protected responses, non-overlapping groups, count suppression and receipt semantics. Hardware autonomy, phone outbox hop receipts, credential lifecycle, production identity integration, retention/deletion automation and full security assurance remain development/pilot gates. Do not claim a formal security audit, medical-device certification or clinical validation. Acknowledging receipt must never resolve an active worker help state. Reconnection must not reset the sample time of old data. Red is preserved under uncertainty. On the radio/power failure path, no software queue can guarantee immediate offline delivery. Worker consent does not by itself resolve employment power imbalance or every legal basis.')
 
 s=clear_body(10,'Hardware requirements','Current submission: watch link simulated; Android is the intended shared-phone platform.')
-table(s,.42,1.87,9.15,['Item','Role / sourcing','Safety and qualification'],[
-['Watch prototype','Programmable BLE controller; nRF52840 Feather is a bench candidate [6].','Button, distinct visual alerts and vibration; no final wrist device selected.'],
-['Shared Android phone','Existing compatible Android handset plus charging / power reserve.','Verify OS, background BLE, reconnection and device-count limits before relying on radio.'],
-['Bench accessories','Protected compatible battery, haptic driver, actuator, enclosure and buttons.','Electrical / charging review, PPE fit, skin contact and heat/dust testing.'],
-['Reference equipment','Borrow or rent an appropriately calibrated WBGT instrument.','Needed for site comparison; temperature/humidity alone does not measure WBGT.']],[1.68,3.76,3.71],11.7,.68)
+card(s,.4,1.8,4.5,1.48,'watch','Watch prototype','Test a Feather nRF52840 board [6] with a help button, visual alerts and vibration. Wrist hardware selection is pending.','174C47')
+card(s,5.04,1.8,4.54,1.48,'phone','Shared Android phone','Check background BLE, reconnection, watch capacity and charging on the selected handset.')
+card(s,.4,3.41,4.5,1.48,'battery','Power and enclosure','Review battery and driver compatibility, PPE fit, skin contact, heat and dust.','F4F0E9')
+card(s,5.04,3.41,4.54,1.48,'chart','Reference instrument','Borrow or rent a calibrated WBGT instrument to compare heat conditions on site.')
 text(s,.45,5.05,8.9,.18,'No procurement, battery-life, IP-rating, range or delivered-price claim. Quotes and exact models remain pending.',9.7,False,MUTED)
 note(s,10,'The user explicitly chose to simulate watch/phone connectivity for this submission and identified Android as the target. This is not a native Android BLE qualification claim. Verified manufacturer candidate: Adafruit Feather nRF52840 Express product 4062, BLE and supported development tooling, accessed 20 November 2026. It is a development board, not a finished certified wrist wearable. No price is quoted because freight, taxes, battery carriage, revision and local availability have not been confirmed. Source actual batteries/drivers/actuators with matched electrical ratings and qualified assembly review. New architecture does not require the older zone-station kit, so its historical budget is not copied. Bench and human-factor trials must verify independent alarms, queue/reboot integrity, runtime, charge safety and glove/sunlight use before any field-reliance statement.')
 

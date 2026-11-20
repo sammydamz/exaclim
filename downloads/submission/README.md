@@ -7,7 +7,7 @@ Prepared 20 November 2026 from the organizer’s 16-slide template.
 - `Exaclim_Architecture.pdf` / `.png`: standalone architecture slide.
 - `validation.json`: checks, version boundary and document digest.
 
-The team-member slide and team name/size fields are intentionally unfilled. The capability answer is 679 characters. The user confirmed no relationships to disclose; slide 14 records that declaration. All other requested sections are populated.
+The team-member slide and team name/size fields are intentionally unfilled. The capability answer is 442 characters. The user confirmed no relationships to disclose; slide 14 records that declaration. All other requested sections are populated.
 
 The deck separates the checked hosted core from simulated watch/Android behaviour and unreleased operational extensions. It does not claim field/clinical validation or confirmed pilot partners. Application login/logout was checked successfully on the hosted URL during preparation.
 
