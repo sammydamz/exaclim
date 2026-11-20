@@ -7,7 +7,7 @@ export interface Crew { id:string; name:string; count:number; watch_ids:string[]
 export interface Assignment { id:string; crew_id:string; worker_name:string; watch_id:string; version:number; assigned_at:string }
 export interface Sample { level:Level; sampled_at:string; received_at:string }
 export interface HelpEvent { id:string; worker_name:string; watch_id:string; crew_id:string; assignment_id:string; assignment_version:number; occurred_at:string; received_at:string|null; delayed:boolean; acknowledged_at:string|null; acknowledged_by:string|null; resolved_at:string|null }
-export interface Site { id:string; name:string; latitude:number; longitude:number; timezone:string; crews:Crew[]; assignments:Assignment[]; samples:Record<string,Sample>; events:HelpEvent[]; scenario:string; forecast_generated_at:string; gateway_connected:boolean; pending_events:HelpEvent[] }
+export interface Site { id:string; name:string; latitude:number; longitude:number; timezone:string; crews:Crew[]; assignments:Assignment[]; samples:Record<string,Sample>; events:HelpEvent[]; scenario:string; forecast_generated_at:string; gateway_connected:boolean; pending_events:HelpEvent[]; weather_cache?:WeatherCache }
 export interface State { schema_version:number; sites:Record<string,Site> }
 type Clock = Date|string;
 const iso = (date:Date) => date.toISOString();
@@ -47,6 +47,21 @@ export function addCrew(state:State,siteId:string,name:string,count:number):Crew
   if(site.crews.length>=10) throw new Error('Demo supports at most 10 crews per site');
   if(site.crews.some(c=>c.name.toLocaleLowerCase()===name.toLocaleLowerCase())) throw new Error('Crew name already exists');
   const crew={id:crypto.randomUUID(),name,count,watch_ids:[] as string[]}; site.crews.push(crew); return {...crew};
+}
+export function renameCrew(state:State,siteId:string,crewId:string,name:string,count:number):Crew {
+  const site=siteFor(state,siteId),crew=crewFor(site,crewId); name=text(name,'Crew name');
+  if(!Number.isInteger(count)||count<1||count>20) throw new Error('Crew count must be an integer from 1 to 20');
+  if(count<crew.watch_ids.length) throw new Error('Crew count cannot drop below assigned watches');
+  if(site.crews.some(c=>c.id!==crewId&&c.name.toLocaleLowerCase()===name.toLocaleLowerCase())) throw new Error('Crew name already exists');
+  crew.name=name;crew.count=count;return {...crew};
+}
+export function removeCrew(state:State,siteId:string,crewId:string):void {
+  const site=siteFor(state,siteId),crew=crewFor(site,crewId);
+  if(crew.watch_ids.length) throw new Error('Reassign watches before removing this crew');
+  const ids=new Set(privacyGroups(site).flat().map(c=>c.id));
+  site.crews=site.crews.filter(c=>c.id!==crewId);
+  site.events=site.events.filter(e=>e.crew_id!==crewId);
+  if(site.crews.length&&ids.has(crewId)) snapshot(state,siteId); // refresh derived grouping caches
 }
 export function assignWatch(state:State,siteId:string,crewId:string,workerName:string,watchId:string):Assignment {
   const site=siteFor(state,siteId),crew=crewFor(site,crewId); workerName=text(workerName,'Worker name'); watchId=text(watchId,'Watch ID',64);
@@ -99,16 +114,18 @@ function localISO(date:Date,zone:string):string {
   return `${dateLabel(p)}T${pad(p.hour)}:${pad(p.minute)}:${pad(p.second)}${sign}${pad(Math.floor(Math.abs(minutes)/60))}:${pad(Math.abs(minutes)%60)}`;
 }
 interface Window {start:string;end:string;start_local:string;end_local:string}
+export interface ForecastRow {start:string;end:string;local_time:string;label:string;risk:Level;temperature_c:number|null;humidity_pct:number|null;source_type:string;data_quality:string;caution:boolean;display_risk:Level|'unknown'}
+export interface Forecast {source:string;source_type:string;provider:string;generated_at:string;fetched_at?:string;stale:boolean;age_seconds:number;data_quality:string;provider_issue_time:string|null;timezone:string;latitude:number;longitude:number;days:{date:string;label:string;hours:ForecastRow[];red_windows:Window[];windows:Window[]}[];policy_version:string;limitations:string}
 function forecastFor(site:Site,clock:Date) {
   const today=dateLabel(localParts(clock,site.timezone)),age=(clock.getTime()-now(site.forecast_generated_at).getTime())/1000,stale=age>21600||age<0;
   const days=[];
   for(let offset=0;offset<2;offset++) {
     const date=shiftDay(today,offset),start=midnight(date,site.timezone),end=midnight(shiftDay(date,1),site.timezone);
-    const hours=[],windows:Window[]=[];let window:Window|null=null;
+    const hours:ForecastRow[]=[],windows:Window[]=[];let window:Window|null=null;
     for(let millis=start.getTime();millis<end.getTime();millis+=3600000) {
       const instant=new Date(millis),next=new Date(Math.min(millis+3600000,end.getTime())),local=localISO(instant,site.timezone),hour=localParts(instant,site.timezone).hour;
       const risk:Level=hour>=11&&hour<15?'red':hour>=9&&hour<17?'amber':'green';
-      const row={start:iso(instant),end:iso(next),local_time:local,label:`${pad(hour)}:${pad(localParts(instant,site.timezone).minute)} ${local.slice(-6).replace(':','')}`,risk,temperature_c:Math.round((26+Math.max(0,Math.sin((hour-6)*Math.PI/14))*9+offset*.5)*10)/10,humidity_pct:65,source_type:'synthetic',data_quality:stale?'stale':'synthetic',caution:stale,display_risk:stale?'unknown':risk};
+      const row:ForecastRow={start:iso(instant),end:iso(next),local_time:local,label:`${pad(hour)}:${pad(localParts(instant,site.timezone).minute)} ${local.slice(-6).replace(':','')}`,risk,temperature_c:Math.round((26+Math.max(0,Math.sin((hour-6)*Math.PI/14))*9+offset*.5)*10)/10,humidity_pct:65,source_type:'synthetic',data_quality:stale?'stale':'synthetic',caution:stale,display_risk:stale?'unknown':risk};
       hours.push(row);
       if(risk==='red'&&!window)window={start:row.start,end:row.end,start_local:local,end_local:localISO(next,site.timezone)};
       else if(risk==='red'&&window){window.end=row.end;window.end_local=localISO(next,site.timezone);}
@@ -119,8 +136,46 @@ function forecastFor(site:Site,clock:Date) {
   }
   return {source:'Synthetic scenario forecast — not live weather',source_type:'synthetic',provider:'Exaclim simulator',generated_at:site.forecast_generated_at,stale,age_seconds:Math.max(0,age),data_quality:stale?'stale':'synthetic',provider_issue_time:null,timezone:site.timezone,latitude:site.latitude,longitude:site.longitude,days,policy_version:POLICY_VERSION,limitations:'Illustrative heat labels; not WBGT or clinical thresholds.'};
 }
+export interface WeatherCache {fetched_at:string;provider_issue_time:string|null;hours:Record<string,{temperature_c:number|null;humidity_pct:number|null}>}
+/** Store a live provider payload on the site; hours keyed by local ISO minute `YYYY-MM-DDTHH:00`. */
+export function recordWeather(site:Site,payload:WeatherCache,clock:Date):void {
+  if(!payload||typeof payload!=='object'||typeof payload.hours!=='object'||payload.hours===null) throw new Error('Weather payload must include an hours object');
+  for(const [key,value] of Object.entries(payload.hours)) {
+    if(!/^\d{4}-\d{2}-\d{2}T\d{2}:00$/.test(key)) throw new Error('Weather hours must be keyed by local YYYY-MM-DDTHH:00');
+    if(value!==null&&(typeof value!=='object'||typeof (value as {temperature_c?:unknown}).temperature_c!=='number'&&((value as {temperature_c?:unknown}).temperature_c!==null))) throw new Error('Weather hours must provide a temperature or null');
+  }
+  const fetched=now(payload.fetched_at);if(fetched.getTime()>clock.getTime()+300000) throw new Error('Weather fetch time is in the future');
+  site.weather_cache={fetched_at:iso(fetched),provider_issue_time:payload.provider_issue_time?iso(now(payload.provider_issue_time)):null,hours:payload.hours};
+  site.forecast_generated_at=iso(clock);
+}
+const WEATHER_STALE_SECONDS=10800;
+/** Live forecast from cached provider hours; missing/stale hours degrade to explicit unknown, never synthetic. */
+function liveForecastFor(site:Site,clock:Date):Forecast|null {
+  const cache=site.weather_cache;
+  if(!cache)return null;
+  const age=(clock.getTime()-now(cache.fetched_at).getTime())/1000,stale=age>WEATHER_STALE_SECONDS||age<0;
+  const today=dateLabel(localParts(clock,site.timezone)),days:Forecast['days']=[];
+  for(let offset=0;offset<2;offset++) {
+    const date=shiftDay(today,offset),start=midnight(date,site.timezone),end=midnight(shiftDay(date,1),site.timezone);
+    const hours:ForecastRow[]=[],windows:Window[]=[];let window:Window|null=null;
+    for(let millis=start.getTime();millis<end.getTime();millis+=3600000) {
+      const instant=new Date(millis),next=new Date(Math.min(millis+3600000,end.getTime())),local=localISO(instant,site.timezone),hour=localParts(instant,site.timezone).hour;
+      const key=local.slice(0,13)+':00',reading=cache.hours[key],known=reading!==undefined&&typeof reading.temperature_c==='number';
+      const temperature=known?(reading as {temperature_c:number}).temperature_c:null;
+      const level:Level=temperature!==null&&temperature>=32?'red':temperature!==null&&temperature>=29?'amber':'green';
+      const row:ForecastRow={start:iso(instant),end:iso(next),local_time:local,label:`${pad(hour)}:${pad(localParts(instant,site.timezone).minute)} ${local.slice(-6).replace(':','')}`,risk:level,temperature_c:temperature,humidity_pct:reading?.humidity_pct??null,source_type:'live',data_quality:known?'live':'missing',caution:!known,display_risk:known&&!stale?level:'unknown'};
+      hours.push(row);
+      if(known&&level==='red'&&!window)window={start:row.start,end:row.end,start_local:local,end_local:localISO(next,site.timezone)};
+      else if(known&&level==='red'&&window){window.end=row.end;window.end_local=localISO(next,site.timezone);}
+      else if(window){windows.push(window);window=null;}
+    }
+    if(window)windows.push(window);
+    days.push({date,label:offset===0?'Today':'Tomorrow',hours,red_windows:windows,windows});
+  }
+  return {source:`Live public weather via Open-Meteo — fetched ${cache.fetched_at}`,source_type:'live',provider:'Open-Meteo',generated_at:iso(clock),fetched_at:cache.fetched_at,stale,age_seconds:Math.max(0,age),data_quality:stale?'stale':'live',provider_issue_time:cache.provider_issue_time,timezone:site.timezone,latitude:site.latitude,longitude:site.longitude,days,policy_version:POLICY_VERSION,limitations:'Air-temperature illustration; not WBGT or clinical thresholds.'};
+}
 export function snapshot(state:State,siteId='accra',at?:Clock) {
-  const site=siteFor(state,siteId),clock=now(at),forecast=forecastFor(site,clock),groups=[],suggestions=[];
+  const site=siteFor(state,siteId),clock=now(at),forecast=liveForecastFor(site,clock)??forecastFor(site,clock),groups=[],suggestions=[];
   for(const crews of privacyGroups(site)) {
     const ids=crews.map(c=>c.id),watchIds=crews.flatMap(c=>c.watch_ids),expected=crews.reduce((a,c)=>a+c.count,0),fresh:Sample[]=[],known:Level[]=[],sampleTimes:number[]=[],receiptTimes:number[]=[];
     for(const watch of watchIds) {
@@ -140,7 +195,7 @@ export function snapshot(state:State,siteId='accra',at?:Clock) {
     suggestions.push({group_id:id,group_name:group.name,state:overall,title:unknown||suppressed?'Review site controls':'Plan breaks and rotation',level:overall,reason:'Uses the most cautious group state and upcoming forecast; uncertainty never lowers caution.',action,window,policy_version:POLICY_VERSION,source:'Synthetic forecast + simulated privacy-safe group state',data_quality:unknown||suppressed?'incomplete':forecast.stale?'stale':'synthetic',limitations:'Advice — supervisor decides. No clinical rest prescription or safe-work allowance.'});
   }
   const emergencies=site.events.filter(e=>!e.acknowledged_at).map(e=>({id:e.id,worker_name:e.worker_name,watch_id:e.watch_id,crew_id:e.crew_id,occurred_at:e.occurred_at,received_at:e.received_at,acknowledged_at:e.acknowledged_at,acknowledged_by:e.acknowledged_by,resolved_at:e.resolved_at,delayed:e.delayed,crew_name:crewFor(site,e.crew_id).name})).sort((a,b)=>a.occurred_at.localeCompare(b.occurred_at)||a.id.localeCompare(b.id));
-  return {site:{id:site.id,name:site.name,latitude:site.latitude,longitude:site.longitude,timezone:site.timezone},mode:'Synthetic demo — no real workers or devices',policy_version:POLICY_VERSION,generated_at:iso(clock),scenario:site.scenario,forecast,groups,suggestions,emergencies,active_help_count:site.events.filter(e=>!e.resolved_at).length};
+  return {site:{id:site.id,name:site.name,latitude:site.latitude,longitude:site.longitude,timezone:site.timezone},mode:'Synthetic demo — no real workers or devices',policy_version:POLICY_VERSION,generated_at:iso(clock),scenario:site.scenario,forecast,groups,suggestions,emergencies,active_help_count:site.events.filter(e=>!e.resolved_at).length,weather_source:forecast.source_type};
 }
 export function scenario(state:State,siteId:string,kind:string,at?:Clock) {
   const site=siteFor(state,siteId),clock=now(at),allowed=['normal','rising-heat','connection-lost','reconnect','help','symptom','delayed-help','resolve-help'];
@@ -164,4 +219,59 @@ export function acknowledge(state:State,eventId:string,actor='Demo Supervisor',a
   eventId=text(eventId,'Event ID');actor=text(actor,'Actor');const clock=now(at);
   for(const site of Object.values(state.sites))for(const event of site.events)if(event.id===eventId){if(!event.acknowledged_at){event.acknowledged_at=iso(clock);event.acknowledged_by=actor;}return {...event};}
   throw new Error('Unknown help event');
+}
+export interface GatewayBatchEntry {watch_id:string;level:Level;sampled_at:string;sequence:number}
+export interface GatewayHelpEntry {event_id:string;watch_id:string;occurred_at:string;kind:'help'|'symptom'}
+/** Validate an aggregate batch for a site: known watches, ordered sequences, no future samples.
+ * Returns the highest accepted sequence; throws with a readable reason otherwise. */
+export function validateBatch(state:State,siteId:string,entries:GatewayBatchEntry[],lastSequence:number,clock:Date):number {
+  const site=siteFor(state,siteId);
+  if(!Array.isArray(entries)||entries.length>200) throw new Error('Batch must contain at most 200 entries');
+  const watches=new Map(site.assignments.map(a=>[a.watch_id.toLowerCase(),a])),known=new Set(watches.keys());
+  let highest=lastSequence;
+  const seenSequences=new Set<number>();
+  for(const entry of entries) {
+    if(typeof entry.watch_id!=='string'||typeof entry.sequence!=='number'||!Number.isInteger(entry.sequence)) throw new Error('Each batch entry needs a watch ID and integer sequence');
+    if(!known.has(entry.watch_id.toLowerCase())) throw new Error(`Unknown watch ID in batch`);
+    if(entry.sequence<=lastSequence) throw new Error('Batch sequence was already processed');
+    if(seenSequences.has(entry.sequence)) throw new Error('Duplicate sequence within batch');
+    seenSequences.add(entry.sequence);
+    if(!LEVELS.includes(entry.level)) throw new Error('Batch level must be green, amber or red');
+    const sampled=now(entry.sampled_at);
+    if(sampled.getTime()>clock.getTime()+120000) throw new Error('Sample timestamp is in the future');
+    if(sampled.getTime()<clock.getTime()-86400000) throw new Error('Sample timestamp is older than one day');
+    highest=Math.max(highest,entry.sequence);
+  }
+  return highest;
+}
+/** Validate an authorized help event: known watch, immutable ID, plausible occurrence time. */
+export function validateHelpEvent(state:State,siteId:string,entry:GatewayHelpEntry,clock:Date):{watch_id:string;assignment:Assignment;occurred:Date} {
+  const site=siteFor(state,siteId);
+  if(typeof entry.event_id!=='string'||!/^[A-Za-z0-9-]{8,64}$/.test(entry.event_id)) throw new Error('Help event needs an ID of 8-64 letters, digits or dashes');
+  if(entry.kind!=='help'&&entry.kind!=='symptom') throw new Error('Help kind must be help or symptom');
+  const assignment=site.assignments.find(a=>a.watch_id.toLowerCase()===entry.watch_id?.toLowerCase());
+  if(!assignment) throw new Error('Unknown watch ID for help event');
+  const occurred=now(entry.occurred_at);
+  if(occurred.getTime()>clock.getTime()+120000) throw new Error('Help occurrence time is in the future');
+  if(occurred.getTime()<clock.getTime()-86400000*2) throw new Error('Help occurrence time is older than two days');
+  return {watch_id:assignment.watch_id,assignment,occurred};
+}
+/** Apply a validated batch: per-watch samples measured at their stated time. */
+export function applyBatch(state:State,siteId:string,entries:GatewayBatchEntry[]):void {
+  const site=siteFor(state,siteId);
+  for(const entry of entries) {
+    const assignment=site.assignments.find(a=>a.watch_id.toLowerCase()===entry.watch_id.toLowerCase())!;
+    site.samples[assignment.watch_id]={level:entry.level,sampled_at:iso(now(entry.sampled_at)),received_at:iso(new Date())};
+  }
+  site.gateway_connected=true;
+}
+/** Apply a validated help event; duplicates (same immutable ID) are ignored. */
+export function applyHelpEvent(state:State,siteId:string,entry:GatewayHelpEntry,assignment:Assignment,occurred:Date,clock:Date):HelpEvent {
+  const site=siteFor(state,siteId);
+  const existing=site.events.find(e=>e.id===entry.event_id);
+  if(existing)return existing;
+  const delayed=clock.getTime()-occurred.getTime()>600000;
+  const event:HelpEvent={id:entry.event_id,worker_name:assignment.worker_name,watch_id:assignment.watch_id,crew_id:assignment.crew_id,assignment_id:assignment.id,assignment_version:assignment.version,occurred_at:iso(occurred),received_at:iso(clock),delayed,acknowledged_at:null,acknowledged_by:null,resolved_at:null};
+  site.events.push(event);
+  return event;
 }

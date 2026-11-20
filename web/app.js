@@ -7,7 +7,7 @@ import { agent, onAction, inputValue, setInput, setSelect, escapeHTML as esc, ic
 
 globalThis.exaclim = Object.freeze({ agent });
 const $ = selector => document.querySelector(selector);
-const state = {user:null, site:'accra', snapshot:null, offline:false, busy:false, epoch:0, day:'today', hour:null, forecastSignature:'', emergencySignature:'', siteSignature:'', setup:null, ackErrors:new Map(), pendingAcks:new Set()};
+const state = {user:null, site:'accra', snapshot:null, offline:false, busy:false, epoch:0, day:'today', hour:null, forecastSignature:'', emergencySignature:'', siteSignature:'', setup:null, ackErrors:new Map(), pendingAcks:new Set(), editingCrew:null, streamLive:false};
 let toastTimer;
 const scenarios = [
   ['normal','Routine shift','Refresh readings for a routine shift.'],
@@ -76,7 +76,8 @@ function showAuthenticated() {
   ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=false;});
 }
 function clearAuthenticated() {
-  state.epoch++;state.busy=false;state.user=null;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.siteSignature='';
+  state.epoch++;state.busy=false;state.user=null;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.siteSignature='';state.streamLive=false;
+  stopStream();
   $('#dashboard').hidden=true;$('#login-page').hidden=false;
   ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=true;});
   $('#emergency-region').replaceChildren();$('#crew-list').replaceChildren();$('#suggestions-list').replaceChildren();$('#setup-crews').replaceChildren();$('#setup-assignments').replaceChildren();
@@ -228,7 +229,8 @@ async function refreshDashboard() {
 }
 async function changeSite(id) {
   if(!id || id===state.site)return;
-  state.epoch++;state.site=id;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.hour=null;
+  state.epoch++;state.site=id;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.hour=null;state.streamLive=false;
+  stopStream();startStream();
   $('#emergency-region').replaceChildren();$('#crew-list').innerHTML='<div class="empty-state">Loading the selected site…</div>';$('#suggestions-list').replaceChildren();$('#forecast-hours').replaceChildren();$('#hour-detail').textContent='Waiting for authorized site data.';
   state.busy=false;await refreshDashboard();
 }
@@ -237,7 +239,7 @@ function renderSetup(data) {
   const site=data.site || state.snapshot?.site || {};
   setInput('setup-site-name',site.name || '');setInput('setup-latitude',String(site.latitude ?? ''));setInput('setup-longitude',String(site.longitude ?? ''));setInput('setup-timezone',site.timezone || 'Africa/Accra');
   const crews=data.crews || [];
-  $('#setup-crews').innerHTML=crews.length?crews.map(crew=>`<div class="admin-row"><strong>${esc(crew.name)}</strong><small>${esc(crew.count ?? crew.worker_count ?? crew.expected_workers ?? 0)} expected workers</small></div>`).join(''):'<div class="setup-info">No crews yet. Create your first crew below.</div>';
+  $('#setup-crews').innerHTML=crews.length?crews.map(crew=>`<div class="admin-row"><div><strong>${esc(crew.name)}</strong><small>${esc(crew.count ?? crew.worker_count ?? crew.expected_workers ?? 0)} expected workers</small></div><div class="crew-admin-actions"><ui-button><button class="text-button edit-crew" data-crew-id="${esc(crew.id)}" data-crew-name="${esc(crew.name)}" data-crew-count="${esc(crew.count)}" aria-label="Edit ${esc(crew.name)}">Edit</button></ui-button><ui-button><button class="text-button remove-crew" data-crew-id="${esc(crew.id)}" data-crew-name="${esc(crew.name)}" aria-label="Remove ${esc(crew.name)}">Remove</button></ui-button></div></div>`).join(''):'<div class="setup-info">No crews yet. Create your first crew below.</div>';
   setSelect('assignment-crew',crews.map(crew=>({value:String(crew.id),label:crew.name})),crews[0]?.id);
   $('#setup-assignments').innerHTML=(data.assignments || []).map(item=>`<div class="admin-row"><div><strong>${esc(item.worker_name || 'Unassigned')}</strong><br><small>${esc(crews.find(crew=>crew.id===item.crew_id)?.name || item.crew_name || item.crew_id)}</small></div><small>${esc(item.watch_id)}</small></div>`).join('') || '<div class="setup-info">No watch assignments yet.</div>';
 }
@@ -257,6 +259,31 @@ function wireActions() {
   onAction('#fill-demo',()=>{setInput('login-email','demo@exaclim.test');setInput('login-password','Exaclim2026!');});
   onAction('#submit-login',signIn);
   $('#login-form').addEventListener('submit',event=>event.preventDefault());
+  onAction('#create-site',async()=>{
+    const form=$('#site-create-form');if(!form.reportValidity())return;
+    $('#site-create-error').textContent='';
+    try {
+      const result=await api('/api/v1/sites',{name:inputValue('new-site-name'),latitude:Number(inputValue('new-site-latitude')),longitude:Number(inputValue('new-site-longitude')),timezone:inputValue('new-site-timezone')});
+      state.user.site_ids=[...new Set([...(state.user?.site_ids||[]),result.site.id])];
+      setInput('new-site-name','');$('#toast').hidden=false;notify(`Site "${result.site.name}" created. Select it from the switcher.`);
+      await loadSetup();await refreshDashboard();
+    } catch(error){$('#site-create-error').textContent=`Not saved: ${error.message}`;}
+  });
+  $('#site-create-form').addEventListener('submit',event=>event.preventDefault());
+  $('#setup-crews').addEventListener('click',async event=>{
+    const button=event.target.closest('button');
+    if(!button)return;
+    if(button.classList.contains('edit-crew')) {
+      setInput('new-crew-name',button.dataset.crewName||'');setInput('new-crew-count',button.dataset.crewCount||'3');
+      state.editingCrew=button.dataset.crewId;$('#crew-form-title').textContent=`Edit crew: ${button.dataset.crewName}`;
+      $('#cancel-crew-edit').hidden=false;
+    } else if(button.classList.contains('remove-crew')) {
+      $('#crew-error').textContent='';
+      try {await api(`/api/v1/sites/${encodeURIComponent(state.site)}/crews/${encodeURIComponent(button.dataset.crewId)}`,{},'DELETE');notify('Crew removed');await loadSetup();await refreshDashboard();}
+      catch(error){$('#crew-error').textContent=`Not removed: ${error.message}`;}
+    }
+  });
+  onAction('#cancel-crew-edit',()=>{state.editingCrew=null;setInput('new-crew-name','');setInput('new-crew-count','3');$('#crew-form-title').textContent='New crew';$('#cancel-crew-edit').hidden=true;$('#crew-error').textContent='';});
   onAction('#sign-out',async()=>{
     try{await api('/api/v1/auth/logout',{});clearAuthenticated();notify('Signed out.');}
     catch(error){notify(`Sign out not confirmed: ${error.message}`);}
@@ -267,7 +294,14 @@ function wireActions() {
   $('#site-select').addEventListener('valuechange',event=>changeSite(event.detail.value));
   $('#forecast-tabs').addEventListener('valuechange',event=>{state.day=event.detail.value;state.hour=null;renderForecast(true);});
   onAction('#save-site',()=>saveForm('#site-form','#site-error',`/api/v1/sites/${encodeURIComponent(state.site)}`,()=>({name:inputValue('setup-site-name'),latitude:Number(inputValue('setup-latitude')),longitude:Number(inputValue('setup-longitude')),timezone:inputValue('setup-timezone')}),'PATCH','Site details saved'));
-  onAction('#create-crew',()=>saveForm('#crew-form','#crew-error',`/api/v1/sites/${encodeURIComponent(state.site)}/crews`,()=>({name:inputValue('new-crew-name'),count:Number(inputValue('new-crew-count'))}),'POST','Crew created'));
+  onAction('#create-crew',async()=>{
+    const editing=state.editingCrew;
+    if(editing) {
+      $('#crew-error').textContent='';
+      try {await api(`/api/v1/sites/${encodeURIComponent(state.site)}/crews/${encodeURIComponent(editing)}`,{name:inputValue('new-crew-name'),count:Number(inputValue('new-crew-count'))},'PATCH');notify('Crew updated');state.editingCrew=null;setInput('new-crew-name','');setInput('new-crew-count','3');$('#crew-form-title').textContent='New crew';$('#cancel-crew-edit').hidden=true;await loadSetup();await refreshDashboard();}
+      catch(error){$('#crew-error').textContent=`Not saved: ${error.message}`;}
+    } else await saveForm('#crew-form','#crew-error',`/api/v1/sites/${encodeURIComponent(state.site)}/crews`,()=>({name:inputValue('new-crew-name'),count:Number(inputValue('new-crew-count'))}),'POST','Crew created');
+  });
   onAction('#save-assignment',()=>saveForm('#assignment-form','#assignment-error',`/api/v1/sites/${encodeURIComponent(state.site)}/assignments`,()=>({crew_id:inputValue('assignment-crew'),worker_name:inputValue('assignment-name'),watch_id:inputValue('assignment-watch')}),'POST','Watch assignment saved'));
   ['#site-form','#crew-form','#assignment-form'].forEach(id=>$(id).addEventListener('submit',event=>event.preventDefault()));
   const list=$('#demo-scenarios');
@@ -284,11 +318,29 @@ function wireActions() {
 }
 async function initialize() {
   wireActions();
-  try {const result=await api('/api/v1/auth/me');state.user=result.user;state.site=state.user?.site_ids?.[0] || 'accra';showAuthenticated();await refreshDashboard();}
+  try {const result=await api('/api/v1/auth/me');state.user=result.user;state.site=state.user?.site_ids?.[0] || 'accra';showAuthenticated();await refreshDashboard();startStream();}
   catch {$('#login-page').hidden=false;}
-  setInterval(()=>{if(state.user && !document.hidden && navigator.onLine)refreshDashboard();},1000);
+  setInterval(()=>{if(state.user && !document.hidden && navigator.onLine && !state.streamLive)refreshDashboard();},1000);
   setInterval(()=>{if(state.user && state.snapshot){renderConnection();renderCrews();}},1000);
   window.addEventListener('offline',()=>{state.offline=true;if(state.user)render();});
-  window.addEventListener('online',()=>refreshDashboard());
+  window.addEventListener('online',()=>{refreshDashboard();resetStream();});
 }
+let streamSource=null,streamBackoff=1000,streamTimer=null;
+function startStream() {
+  if(!state.user||!window.EventSource)return;
+  stopStream();
+  const site=encodeURIComponent(state.site),source=new EventSource(`/api/v1/sites/${site}/events`);
+  streamSource=source;
+  source.addEventListener('open',()=>{state.streamLive=true;state.offline=false;streamBackoff=1000;renderConnection();});
+  source.addEventListener('dashboard',event=>{
+    try {
+      const detail=JSON.parse(event.data);
+      if(detail.new_emergency){refreshDashboard();notify('New help request received');}
+      else if(!document.hidden)refreshDashboard();
+    } catch {/* malformed event; polling continues */}
+  });
+  source.onerror=()=>{state.streamLive=false;renderConnection();stopStream();streamBackoff=Math.min(streamBackoff*2,30000);streamTimer=setTimeout(startStream,streamBackoff);};
+}
+function stopStream() {if(streamSource){streamSource.close();streamSource=null;}if(streamTimer){clearTimeout(streamTimer);streamTimer=null;}}
+function resetStream() {state.streamLive=false;streamBackoff=1000;if(state.user)startStream();}
 initialize();
