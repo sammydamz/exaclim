@@ -99,7 +99,6 @@ function renderConnection() {
   $('#connection-text').textContent=offline?'Connection interrupted':'Connected';
   $('#connection-warning').hidden=!offline;
   $('#connection-warning').textContent='Connection lost. Readings may be out of date and new help requests may be delayed. Check the crew phone and follow the site emergency procedure.';
-  $('#last-sync').textContent=state.snapshot ? `Last server receipt ${age(state.snapshot.updated_at)} · ${offline?'offline':'connected'}` : 'Awaiting a verified update';
 }
 function renderSite() {
   const snapshot=state.snapshot;if(!snapshot)return;
@@ -132,7 +131,7 @@ function detailHour(index) {
   $('#forecast-hours').querySelectorAll('.hour-card').forEach((node,i)=>{node.toggleAttribute('data-selected',i===index);});
   const temperature=typeof row.temperature_c==='number'?`${row.temperature_c.toFixed(1)}°C`:'temperature unavailable';
   const humidity=typeof row.humidity_pct==='number'?`${row.humidity_pct}% relative humidity`:'humidity unavailable';
-  $('#hour-detail').textContent=`${row.label || row.hour || stamp(row.time)} · ${statusLabel(forecastLevel(row))} · ${temperature} · ${humidity}${state.offline?' · Offline':row.quality && row.quality!=='synthetic'?` · ${row.quality}`:''}`;
+  $('#hour-detail').textContent=`${row.label || row.hour || stamp(row.time)}, ${statusLabel(forecastLevel(row))}, ${temperature}, ${humidity}${state.offline?', Offline':row.quality && row.quality!=='synthetic'?`, ${row.quality}`:''}`;
 }
 function renderForecast(force=false) {
   const forecast=state.snapshot?.forecast;
@@ -140,12 +139,12 @@ function renderForecast(force=false) {
   if(!force && signature===state.forecastSignature)return;
   state.forecastSignature=signature;
   const day=getDay();const hours=Array.isArray(day?.hours)?day.hours:[];
-  $('#forecast-description').textContent=day?`${day.label || (state.day==='today'?'Today':'Tomorrow')} · ${day.date || ''} · ${state.snapshot?.site?.timezone || 'site-local time'}`:'Forecast unavailable. Check site conditions.';
+  $('#forecast-description').textContent=day?`${day.label || (state.day==='today'?'Today':'Tomorrow')}, ${day.date || ''}, ${state.snapshot?.site?.timezone || 'site-local time'}`:'Forecast unavailable. Check site conditions.';
   const windows=day?.windows || day?.red_windows || [];
   const window=$('#risk-window');
   window.classList.toggle('red-window',windows.length>0 && !state.offline && !forecast?.stale);
   window.classList.toggle('neutral-window',state.offline || forecast?.stale || !hours.length);
-  const windowText=state.offline?'Offline. Check site conditions.':forecast?.stale?'Forecast out of date. Check site conditions.':windows.length?windows.map(item=>`${state.day==='today'?'Today':'Tomorrow'} ${windowTime(item.start)}–${windowTime(item.end)}: ${(item.label || 'High heat risk').replace(/high-risk scenario window/i,'High heat risk')}`).join(' · '):hours.length?'No red periods forecast. Check conditions before starting work.':'No forecast available for this day. Use the manual site assessment.';
+  const windowText=state.offline?'Offline. Check site conditions.':forecast?.stale?'Forecast out of date. Check site conditions.':windows.length?windows.map(item=>`${state.day==='today'?'Today':'Tomorrow'} ${windowTime(item.start)}–${windowTime(item.end)}: ${(item.label || 'High heat risk').replace(/high-risk scenario window/i,'High heat risk')}`).join(', '):hours.length?'No red periods forecast. Check conditions before starting work.':'No forecast available for this day. Use the manual site assessment.';
   window.innerHTML=`${icon(windows.length?'warning':'clock')}<span>${esc(windowText)}</span>`;
   const container=$('#forecast-hours');const previousScroll=$('.forecast-scroll').scrollLeft;
   container.replaceChildren();
@@ -159,7 +158,7 @@ function renderForecast(force=false) {
     wrapper.append(button);container.append(wrapper);onAction(button,()=>detailHour(index));
   });
   $('.forecast-scroll').scrollLeft=previousScroll;
-  $('#forecast-provenance').textContent=`Sample forecast${forecast?.fetched_at?` · Updated ${stamp(forecast.fetched_at,{day:'numeric',month:'short'})}`:''}`;
+  $('#forecast-provenance').textContent=`Sample forecast${forecast?.fetched_at?`, Updated ${stamp(forecast.fetched_at,{day:'numeric',month:'short'})}`:''}`;
   if(hours.length)detailHour(Math.min(state.hour??Math.min(8,hours.length-1),hours.length-1));
 }
 function renderCrews() {
@@ -177,7 +176,7 @@ function renderCrews() {
     const name=group.name || 'Privacy group';
     const row=document.createElement('wa-card');row.className=`crew-row ${level}`;row.dataset.groupId=group.id;
     const fresh=secondsOld(group.updated_at)<=120 && !state.offline && valid>=3 && valid===total && !(group.counts?.unknown>0) && !['stale','invalid','unknown','incomplete','insufficient'].includes(group.data_quality);
-    row.innerHTML=`<div class="crew-row-header"><div class="crew-name"><span class="crew-icon">${icon('people')}</span><div><h3>${esc(name)}</h3><div class="crew-subtitle">${esc(total)} expected · ${esc(valid)} valid contributors</div></div></div><wa-badge class="status-pill" pill appearance="filled" variant="${level==='green'?'success':level==='red'?'danger':'warning'}">${esc(statusLabel(level))}</wa-badge></div>${suppressed?'<p class="suppressed-note">Not enough readings. Counts are hidden.</p>':`<div class="count-strip">${['green','amber','red','unknown'].map(key=>`<span class="count-item"><i class="dot ${key}"></i><strong>${esc(group.counts[key]??0)}</strong>${key[0].toUpperCase()+key.slice(1)}</span>`).join('')}</div>`}${group.help_active?`<div class="help-marker">${icon('help')} Help requested. Follow site procedure.</div>`:''}<div class="crew-row-foot"><span>${fresh?'Last valid sample':'Caution · last valid sample'} ${esc(age(group.updated_at))}<br>Server received ${esc(age(group.received_at))}</span><span>${state.offline?'Offline':fresh?'Fresh coverage':`Stale / incomplete`}<br>${esc(valid)} / ${esc(total)} contributors</span></div>`;
+    row.innerHTML=`<div class="crew-row-header"><div class="crew-name"><span class="crew-icon">${icon('people')}</span><div><h3>${esc(name)}</h3><div class="crew-subtitle">${esc(total)} expected, ${esc(valid)} valid contributors</div></div></div><wa-badge class="status-pill" pill appearance="filled" variant="${level==='green'?'success':level==='red'?'danger':'warning'}">${esc(statusLabel(level))}</wa-badge></div>${suppressed?'<p class="suppressed-note">Not enough readings. Counts are hidden.</p>':`<div class="count-strip">${['green','amber','red','unknown'].map(key=>`<span class="count-item"><i class="dot ${key}"></i><strong>${esc(group.counts[key]??0)}</strong>${key[0].toUpperCase()+key.slice(1)}</span>`).join('')}</div>`}${group.help_active?`<div class="help-marker">${icon('help')} Help requested. Follow site procedure.</div>`:''}<div class="crew-row-foot"><span>${fresh?'Last valid sample':'Caution: last valid sample'} ${esc(age(group.updated_at))}<br>Server received ${esc(age(group.received_at))}</span><span>${state.offline?'Offline':fresh?'Fresh coverage':`Stale / incomplete`}<br>${esc(valid)} / ${esc(total)} contributors</span></div>`;
     crewList.append(row);
     const suggestion=group.suggestion || {};
     const caution=state.offline || !fresh || suppressed;
@@ -197,7 +196,7 @@ function renderEmergencies() {
     const row=document.createElement('wa-card');row.className='emergency-banner';row.dataset.eventId=event.id;
     const id=String(event.id);const pending=state.pendingAcks.has(id);
     const occurrence=event.occurrence_time_unverified || !event.occurred_at?'Occurrence time unverified':`Occurred ${stamp(event.occurred_at,{day:'numeric',month:'short'})}`;
-    row.innerHTML=`<div class="emergency-icon">${icon('help')}</div><div class="emergency-content"><span class="emergency-new">WORKER HELP REQUEST${state.offline?' · DELIVERY STATUS UNVERIFIED':''}</span><h2>${esc(event.worker_name || 'Unassigned watch · help requested')}<span class="delayed-label" ${event.delayed?'':'hidden'}>Delayed delivery</span></h2><p>${esc(event.crew_name || 'Authorized crew')} · Use the site emergency procedure and seek urgent help directly.</p><div class="emergency-times">${esc(occurrence)} · Received ${esc(stamp(event.received_at,{day:'numeric',month:'short'}))}${event.resolved_at?' · Device reports local resolution; receipt still needs acknowledgement.':''}</div>${state.ackErrors.has(id)?`<p class="ack-error">${esc(state.ackErrors.get(id))}</p>`:''}</div>`;
+    row.innerHTML=`<div class="emergency-icon">${icon('help')}</div><div class="emergency-content"><span class="emergency-new">WORKER HELP REQUEST${state.offline?': DELIVERY STATUS UNVERIFIED':''}</span><h2>${esc(event.worker_name || 'Unassigned watch, help requested')}<span class="delayed-label" ${event.delayed?'':'hidden'}>Delayed delivery</span></h2><p>${esc(event.crew_name || 'Authorized crew')}, Use the site emergency procedure and seek urgent help directly.</p><div class="emergency-times">${esc(occurrence)}, Received ${esc(stamp(event.received_at,{day:'numeric',month:'short'}))}${event.resolved_at?', Device reports local resolution; receipt still needs acknowledgement.':''}</div>${state.ackErrors.has(id)?`<p class="ack-error">${esc(state.ackErrors.get(id))}</p>`:''}</div>`;
     const wrapper=document.createElement('ui-button');wrapper.setAttribute('pending-announcement','Acknowledging receipt');
     const button=document.createElement('button');button.type='button';button.className='button';button.setAttribute('aria-label',`Acknowledge help from ${event.worker_name || 'unassigned watch'}`);button.textContent=pending?'Confirming receipt…':'Acknowledge receipt';
     wrapper.disabled=pending;wrapper.append(button);row.append(wrapper);region.append(row);onAction(button,()=>acknowledge(id));
