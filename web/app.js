@@ -75,6 +75,9 @@ async function api(path, body, method = body===undefined ? 'GET' : 'POST') {
 function showAuthenticated() {
   $('#login-page').hidden=true;$('#dashboard').hidden=false;
   ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=false;});
+  const name=state.user?.name || 'Supervisor',email=state.user?.email || '';
+  $('#user-initials').textContent=name.split(/\s+/).map(part=>part[0]).join('').slice(0,2).toUpperCase() || 'S';
+  $('#user-menu-name').textContent=name;$('#user-menu-email').textContent=email;
 }
 function clearAuthenticated() {
   state.epoch++;state.busy=false;state.user=null;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.siteSignature='';state.streamLive=false;
@@ -288,6 +291,10 @@ function wireActions() {
   onAction('#sign-out',async()=>{
     try{await api('/api/v1/auth/logout',{});clearAuthenticated();notify('Signed out.');}
     catch(error){notify(`Sign out not confirmed: ${error.message}`);}
+  });
+  $('#user-menu').addEventListener('action',async event=>{
+    if(event.detail.value==='signout'){try{await api('/api/v1/auth/logout',{});clearAuthenticated();notify('Signed out.');}catch(error){notify(`Sign out not confirmed: ${error.message}`);}}
+    else if(event.detail.value==='setup'){await loadSetup();$('#setup-dialog').open=true;}
   });
   onAction('#open-setup',async()=>{await loadSetup();$('#setup-dialog').open=true;});
   onAction('#open-demo',()=>{$('#demo-dialog').open=true;});

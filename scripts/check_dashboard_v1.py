@@ -280,7 +280,8 @@ def main():
                 assert 'Exaclim2026!' not in serialized_storage
                 passed('Browser storage contains no synthetic emergency names or password', ['QA35'])
 
-                page.locator('#sign-out').click()
+                page.locator('#user-menu ui-menu-trigger button').click()
+                page.locator('#user-menu ui-menu-item[value=signout]').click()
                 expect(page.locator('#dashboard')).to_be_hidden()
                 expect(page.locator('#login-page')).to_be_visible()
                 assert context.request.get(base + '/api/v1/auth/me').status == 401

@@ -7,7 +7,9 @@ import '@ui-sdk/web/field';
 import '@ui-sdk/web/input';
 import '@ui-sdk/web/select';
 import '@ui-sdk/web/dialog';
-import { createElement, ChevronDown, Sun, Clock, Users, CircleHelp, TriangleAlert, RefreshCw, MapPin, X } from 'lucide';
+import '@ui-sdk/web/menu';
+import '@ui-sdk/web/avatar';
+import { createElement, ChevronDown, ChevronRight, Sun, Clock, Users, CircleHelp, TriangleAlert, RefreshCw, MapPin, X, LogOut, User, Settings } from 'lucide';
 import { createAgent } from '@ui-sdk/web/agent';
 
 export const agent = createAgent();
@@ -37,7 +39,7 @@ export function setSelect(id, items, value) {
   root.value = value ?? items[0]?.value ?? null;
 }
 export const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-const ICONS = {sun:Sun, clock:Clock, people:Users, help:CircleHelp, warning:TriangleAlert, refresh:RefreshCw, pin:MapPin, chevron:ChevronDown, close:X};
+const ICONS = {sun:Sun, clock:Clock, people:Users, help:CircleHelp, warning:TriangleAlert, refresh:RefreshCw, pin:MapPin, chevron:ChevronDown, close:X, logout:LogOut, user:User, settings:Settings};
 export const icon = (name, className = '') => {
   const svg = createElement(ICONS[name] ?? Sun, {'aria-hidden':'true'});
   svg.setAttribute('class', `icon ${className}`.trim());
