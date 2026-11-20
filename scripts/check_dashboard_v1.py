@@ -42,7 +42,7 @@ def main():
 
     def capture(page, filename):
         target = output / filename
-        toast = page.locator('#toast')
+        toast = page.locator('#toast ui-toast').first
         if toast.is_visible():
             expect(toast).not_to_be_visible(timeout=10000)
         page.screenshot(path=str(target), full_page=True)
@@ -130,6 +130,8 @@ def main():
                 assert page.locator('#suggestions-list > wa-card').count() > 0
                 assert page.evaluate("customElements.get('wa-card') !== undefined")
                 assert '—' not in page.locator('#dashboard').inner_text()
+                assert page.locator('.advice-icon,.dialog-symbol,.crew-icon,.welcome-visual,.brand-mark,.privacy-label').count() == 0
+                assert page.evaluate("Boolean(customElements.get('ui-toast'))")
                 assert 'synthetic-dashboard-v1' not in page.locator('#suggestions-list').inner_text()
                 passed('Core screen uses library cards, concise copy and the three specified areas', ['QA44'])
 
@@ -156,7 +158,41 @@ def main():
                 page.keyboard.press('Enter')
                 expect(page.locator('#hour-detail')).not_to_contain_text('Choose an hour')
                 assert '12' in page.locator('#hour-detail').inner_text()
-                passed('Hourly forecast detail is keyboard-accessible without hover', ['QA03', 'QA36'])
+                page.wait_for_timeout(2200)
+                expect(hour).to_be_focused()
+                passed('Hourly forecast detail stays keyboard-accessible and retains focus during polling', ['QA03', 'QA36'])
+
+                original = snapshot()
+                worst = json.loads(json.dumps(original))
+                long_name = 'Construction' * 9
+                worst['site']['name'] = long_name
+                for site in worst.get('sites', []):
+                    if site['id'] == 'accra':
+                        site['name'] = long_name
+                for group in worst['groups']:
+                    group['name'] = long_name
+                page.route('**/api/v1/sites/accra/dashboard', lambda route:
+                    route.fulfill(status=200, content_type='application/json', body=json.dumps(worst)))
+                page.locator('#refresh-dashboard').click()
+                expect(page.locator('#crew-list h3').first).to_have_text(long_name)
+                page.set_viewport_size({'width': 360, 'height': 800})
+                assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                assert page.locator('#crew-list h3').first.evaluate('el => el.scrollWidth <= el.clientWidth + 1')
+                page.unroute('**/api/v1/sites/accra/dashboard')
+                page.set_viewport_size({'width': 1440, 'height': 1000})
+                page.locator('#refresh-dashboard').click()
+                expect(page.locator('#crew-list h3').first).not_to_have_text(long_name)
+                passed('Long worksite and crew names wrap without mobile overflow', ['QA37'])
+
+                page.locator('#site-select button').click()
+                page.get_by_role('option', name='Tema Construction Site', exact=True).click()
+                expect(page.locator('#crew-list')).to_contain_text('Your crews will appear here')
+                expect(page.locator('#suggestions-list')).to_contain_text('Add a crew')
+                assert page.locator('#emergency-region wa-card').count() == 0
+                page.locator('#site-select button').click()
+                page.get_by_role('option', name='Accra Construction Site', exact=True).click()
+                expect(page.locator('#crew-list > wa-card').first).to_be_visible()
+                passed('Worksite selector changes context and empty sites clear prior crew and help content', ['QA25', 'QA35'])
 
                 groups = snapshot()['groups']
                 assert any(len(group['crew_ids']) > 1 for group in groups)
@@ -190,7 +226,7 @@ def main():
                 page.locator('#open-setup').click()
                 page.locator('#setup-site-name input').fill('Accra synthetic browser QA')
                 page.locator('#save-site').click()
-                expect(page.locator('#toast')).to_be_visible()
+                expect(page.locator('#toast ui-toast').first).to_be_visible()
                 expect(page.locator('#site-name')).to_contain_text('Accra synthetic browser QA')
                 page.get_by_role('button', name='Close site setup').click()
                 page.reload(wait_until='networkidle')
@@ -274,7 +310,10 @@ def main():
                 assert page.locator('button').evaluate_all(
                     "els => els.every(el => !!el.closest('ui-button,ui-tabs-tab,ui-select-trigger,ui-dialog-close,ui-dialog-trigger'))")
                 assert page.locator('select').count() == 0
-                passed('Interactive buttons remain SDK-owned and native select controls are absent', ['QA36'])
+                assert page.locator('ui-input input').evaluate_all(
+                    'els => els.every(el => parseFloat(getComputedStyle(el).fontSize) >= 16)')
+                assert 'maximum-scale=1' not in page.locator('meta[name=viewport]').get_attribute('content')
+                passed('Controls remain SDK-owned and inputs are readable without disabling mobile zoom', ['QA36'])
 
                 storage = page.evaluate("({local: Object.keys(localStorage), session: Object.keys(sessionStorage)})")
                 serialized_storage = page.evaluate("JSON.stringify({local:{...localStorage},session:{...sessionStorage}})")

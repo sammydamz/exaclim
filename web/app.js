@@ -3,12 +3,11 @@ import '@fontsource/inter/latin-500.css';
 import '@fontsource/inter/latin-600.css';
 import '@fontsource/inter/latin-700.css';
 import './styles.css';
-import { agent, onAction, inputValue, setInput, setSelect, escapeHTML as esc, icon } from './components/ui.js';
+import { agent, onAction, inputValue, setInput, setSelect, escapeHTML as esc, toast } from './components/ui.js';
 
 globalThis.exaclim = Object.freeze({ agent });
 const $ = selector => document.querySelector(selector);
-const state = {user:null, site:'accra', snapshot:null, offline:false, busy:false, epoch:0, day:'today', hour:null, forecastSignature:'', emergencySignature:'', siteSignature:'', setup:null, ackErrors:new Map(), pendingAcks:new Set()};
-let toastTimer;
+const state = {user:null, site:'accra', snapshot:null, offline:false, busy:false, epoch:0, day:'today', hour:null, forecastSignature:'', crewSignature:'', emergencySignature:'', siteSignature:'', setup:null, ackErrors:new Map(), pendingAcks:new Set()};
 const scenarios = [
   ['normal','Routine shift','Refresh readings for a routine shift.'],
   ['rising-heat','Rising heat','Increase the scenario heat load and update planning advice.'],
@@ -20,15 +19,7 @@ const scenarios = [
 ];
 
 function notify(message) {
-  $('#toast').textContent = `✓ ${message}`;
-  $('#toast').hidden = false;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 4500);
-}
-function sourceText(source) {
-  if (!source) return 'Source unavailable';
-  if (typeof source === 'string') return source;
-  return source.provider || source.name || source.label || 'Source metadata available';
+  toast(message, {id:'workspace-feedback', duration:4500});
 }
 function stamp(value, options={}) {
   const date = new Date(value);
@@ -40,14 +31,6 @@ function secondsOld(value) {
   const date = new Date(value).getTime();
   if (!value || !Number.isFinite(date) || date > Date.now() + 60000) return Infinity;
   return Math.max(0, (Date.now()-date)/1000);
-}
-function age(value) {
-  const seconds = secondsOld(value);
-  if (!Number.isFinite(seconds)) return 'age unverified';
-  if (seconds < 5) return 'just now';
-  if (seconds < 60) return `${Math.floor(seconds)}s ago`;
-  if (seconds < 3600) return `${Math.floor(seconds/60)}m ago`;
-  return `${Math.floor(seconds/3600)}h ago`;
 }
 function statusLabel(level) {return {green:'Green',amber:'Amber / caution',red:'Red / act now',unknown:'Unknown / caution'}[level] || 'Unknown / caution';}
 function cautionLevel(group) {
@@ -76,7 +59,7 @@ function showAuthenticated() {
   ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=false;});
 }
 function clearAuthenticated() {
-  state.epoch++;state.busy=false;state.user=null;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.siteSignature='';
+  state.epoch++;state.busy=false;state.user=null;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.crewSignature='';state.emergencySignature='';state.siteSignature='';
   $('#dashboard').hidden=true;$('#welcome').hidden=false;
   ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=true;});
   $('#emergency-region').replaceChildren();$('#crew-list').replaceChildren();$('#suggestions-list').replaceChildren();$('#setup-crews').replaceChildren();$('#setup-assignments').replaceChildren();
@@ -128,11 +111,11 @@ function detailHour(index) {
   $('#forecast-hours').querySelectorAll('.hour-card').forEach((node,i)=>{node.toggleAttribute('data-selected',i===index);});
   const temperature=typeof row.temperature_c==='number'?`${row.temperature_c.toFixed(1)}°C`:'temperature unavailable';
   const humidity=typeof row.humidity_pct==='number'?`${row.humidity_pct}% relative humidity`:'humidity unavailable';
-  $('#hour-detail').textContent=`${row.label || row.hour || stamp(row.time)}, ${statusLabel(forecastLevel(row))}, ${temperature}, ${humidity}${state.offline?', Offline':row.quality && row.quality!=='synthetic'?`, ${row.quality}`:''}`;
+  $('#hour-detail').textContent=`${stamp(row.time || row.start)}, ${statusLabel(forecastLevel(row))}, ${temperature}, ${humidity}${state.offline?', Offline':row.quality && row.quality!=='synthetic'?`, ${row.quality}`:''}`;
 }
 function renderForecast(force=false) {
   const forecast=state.snapshot?.forecast;
-  const signature=JSON.stringify([forecast,state.day,state.offline]);
+  const signature=JSON.stringify([forecast?.generated_at,forecast?.stale,forecast?.days,state.day,state.offline]);
   if(!force && signature===state.forecastSignature)return;
   state.forecastSignature=signature;
   const day=getDay();const hours=Array.isArray(day?.hours)?day.hours:[];
@@ -142,16 +125,16 @@ function renderForecast(force=false) {
   window.classList.toggle('red-window',windows.length>0 && !state.offline && !forecast?.stale);
   window.classList.toggle('neutral-window',state.offline || forecast?.stale || !hours.length);
   const windowText=state.offline?'Offline. Check site conditions.':forecast?.stale?'Forecast out of date. Check site conditions.':windows.length?windows.map(item=>`${state.day==='today'?'Today':'Tomorrow'} ${windowTime(item.start)}–${windowTime(item.end)}: ${(item.label || 'High heat risk').replace(/high-risk scenario window/i,'High heat risk')}`).join(', '):hours.length?'No red periods forecast. Check conditions before starting work.':'No forecast available for this day. Use the manual site assessment.';
-  window.innerHTML=`${icon(windows.length?'warning':'clock')}<span>${esc(windowText)}</span>`;
+  window.innerHTML=`<span>${esc(windowText)}</span>`;
   const container=$('#forecast-hours');const previousScroll=$('.forecast-scroll').scrollLeft;
   container.replaceChildren();
   if(!hours.length){container.innerHTML='<div class="empty-state"><strong>Forecast unavailable</strong>There are no verified hours for this day. Check conditions locally.</div>';}
   hours.forEach((hour,index)=>{
-    const level=forecastLevel(hour);const label=hour.label || hour.hour || stamp(hour.time);
+    const level=forecastLevel(hour);const label=stamp(hour.time || hour.start);
     const temp=typeof hour.temperature_c==='number'?`${Math.round(hour.temperature_c)}°`:'N/A';
     const wrapper=document.createElement('ui-button');const button=document.createElement('button');
     button.type='button';button.className=`hour-card ${level}`;button.setAttribute('aria-label',`${label}, ${statusLabel(level)}, ${temp}`);
-    button.innerHTML=`<span class="hour-label">${esc(label)}</span><span class="weather-symbol" aria-hidden="true">${level==='unknown'?'N/A':icon('sun')}</span><strong>${esc(temp)}</strong><span class="heat-label">${level==='unknown'?'Unknown':level[0].toUpperCase()+level.slice(1)}</span><span class="heat-bar" aria-hidden="true"></span>`;
+    button.innerHTML=`<span class="hour-label">${esc(label)}</span><strong>${esc(temp)}</strong><span class="heat-label">${level==='unknown'?'Unknown':level[0].toUpperCase()+level.slice(1)}</span><span class="heat-bar" aria-hidden="true"></span>`;
     wrapper.append(button);container.append(wrapper);onAction(button,()=>detailHour(index));
   });
   $('.forecast-scroll').scrollLeft=previousScroll;
@@ -160,11 +143,14 @@ function renderForecast(force=false) {
 }
 function renderCrews() {
   const groups=state.snapshot?.groups || [];
+  const signature=JSON.stringify([groups,state.offline,groups.map(group=>secondsOld(group.updated_at)<=120)]);
+  if(signature===state.crewSignature)return;
+  state.crewSignature=signature;
   const crewList=$('#crew-list'),suggestions=$('#suggestions-list');
   crewList.replaceChildren();suggestions.replaceChildren();
   if(!groups.length){
-    crewList.innerHTML=`<div class="empty-state">${icon('people')}<strong>Your crews will appear here</strong>Add a crew and assign watches in Site setup.</div>`;
-    suggestions.innerHTML=`<div class="empty-state">${icon('clock')}<strong>No crew context yet</strong>Add a crew to see recommendations. Keep water and shade available.</div>`;
+    crewList.innerHTML=`<div class="empty-state"><strong>Your crews will appear here</strong>Add a crew and assign watches in Site setup.</div>`;
+    suggestions.innerHTML=`<div class="empty-state"><strong>No crew context yet</strong>Add a crew to see recommendations. Keep water and shade available.</div>`;
     return;
   }
   groups.forEach(group=>{
@@ -173,14 +159,14 @@ function renderCrews() {
     const name=group.name || 'Privacy group';
     const row=document.createElement('wa-card');row.className=`crew-row ${level}`;row.dataset.groupId=group.id;
     const fresh=secondsOld(group.updated_at)<=120 && !state.offline && valid>=3 && valid===total && !(group.counts?.unknown>0) && !['stale','invalid','unknown','incomplete','insufficient'].includes(group.data_quality);
-    row.innerHTML=`<div class="crew-row-header"><div class="crew-name"><span class="crew-icon">${icon('people')}</span><div><h3>${esc(name)}</h3><div class="crew-subtitle">${esc(total)} expected, ${esc(valid)} valid contributors</div></div></div><wa-badge class="status-pill" pill appearance="filled" variant="${level==='green'?'success':level==='red'?'danger':'warning'}">${esc(statusLabel(level))}</wa-badge></div>${suppressed?'<p class="suppressed-note">Not enough readings. Counts are hidden.</p>':`<div class="count-strip">${['green','amber','red','unknown'].map(key=>`<span class="count-item"><i class="dot ${key}"></i><strong>${esc(group.counts[key]??0)}</strong>${key[0].toUpperCase()+key.slice(1)}</span>`).join('')}</div>`}${group.help_active?`<div class="help-marker">${icon('help')} Help requested. Follow site procedure.</div>`:''}<div class="crew-row-foot"><span>${fresh?'Last valid sample':'Caution: last valid sample'} ${esc(age(group.updated_at))}<br>Server received ${esc(age(group.received_at))}</span><span>${state.offline?'Offline':fresh?'Fresh coverage':`Stale / incomplete`}<br>${esc(valid)} / ${esc(total)} contributors</span></div>`;
+    row.innerHTML=`<div class="crew-row-header"><div class="crew-name"><div><h3>${esc(name)}</h3><div class="crew-subtitle">${esc(valid)} of ${esc(total)} readings</div></div></div><wa-badge class="status-pill" pill appearance="filled" variant="${level==='green'?'success':level==='red'?'danger':'warning'}">${esc(statusLabel(level))}</wa-badge></div>${suppressed?'<p class="suppressed-note">Not enough readings. Counts are hidden.</p>':`<div class="count-strip">${['green','amber','red','unknown'].map(key=>`<span class="count-item"><i class="dot ${key}"></i><strong>${esc(group.counts[key]??0)}</strong>${key[0].toUpperCase()+key.slice(1)}</span>`).join('')}</div>`}${group.help_active?`<div class="help-marker"> Help requested. Follow site procedure.</div>`:''}<div class="crew-row-foot"><span>${group.updated_at?`Last reading ${esc(stamp(group.updated_at))}`:'No reading received'}</span><span>${state.offline?'Offline':fresh?'Fresh coverage':`Stale / incomplete`}<br>${esc(valid)} / ${esc(total)} contributors</span></div>`;
     crewList.append(row);
     const suggestion=group.suggestion || {};
     const caution=state.offline || !fresh || suppressed;
     const title=group.help_active?'Respond to the help request':caution?'Check site conditions':suggestion.title || 'Review the next task window';
     const action=group.help_active?'Follow the site emergency procedure. Confirm the worker has received help.':caution?'Check the crew phone and assess heat on site. Make sure shade and drinking water are available.':suggestion.action || 'Review upcoming heat before assigning heavier tasks; keep shade, water and task rotation available.';
     const item=document.createElement('wa-card');item.className=`suggestion-row ${level}`;
-    item.innerHTML=`<div class="suggestion-topline"><span>${esc(name)}</span><span class="window-label">${icon('clock')} ${esc(caution?'Check now':planningWindow(suggestion.window))}</span></div><h3>${esc(title)}</h3><p>${esc(action)}</p><div class="suggestion-reason">${esc(caution?'Readings incomplete or out of date.':'Based on the forecast and latest crew readings.')}</div>`;
+    item.innerHTML=`<div class="suggestion-topline"><span>${esc(name)}</span><span class="window-label"> ${esc(caution?'Check now':planningWindow(suggestion.window))}</span></div><h3>${esc(title)}</h3><p>${esc(action)}</p><div class="suggestion-reason">${esc(caution?'Readings incomplete or out of date.':'Based on the forecast and latest crew readings.')}</div>`;
     suggestions.append(item);
   });
 }
@@ -193,7 +179,7 @@ function renderEmergencies() {
     const row=document.createElement('wa-card');row.className='emergency-banner';row.dataset.eventId=event.id;
     const id=String(event.id);const pending=state.pendingAcks.has(id);
     const occurrence=event.occurrence_time_unverified || !event.occurred_at?'Occurrence time unverified':`Occurred ${stamp(event.occurred_at,{day:'numeric',month:'short'})}`;
-    row.innerHTML=`<div class="emergency-icon">${icon('help')}</div><div class="emergency-content"><span class="emergency-new">WORKER HELP REQUEST${state.offline?': DELIVERY STATUS UNVERIFIED':''}</span><h2>${esc(event.worker_name || 'Unassigned watch, help requested')}<span class="delayed-label" ${event.delayed?'':'hidden'}>Delayed delivery</span></h2><p>${esc(event.crew_name || 'Authorized crew')}, Use the site emergency procedure and seek urgent help directly.</p><div class="emergency-times">${esc(occurrence)}, Received ${esc(stamp(event.received_at,{day:'numeric',month:'short'}))}${event.resolved_at?', Device reports local resolution; receipt still needs acknowledgement.':''}</div>${state.ackErrors.has(id)?`<p class="ack-error">${esc(state.ackErrors.get(id))}</p>`:''}</div>`;
+    row.innerHTML=`<div class="emergency-content"><span class="emergency-new">WORKER HELP REQUEST${state.offline?': DELIVERY STATUS UNVERIFIED':''}</span><h2>${esc(event.worker_name || 'Unassigned watch, help requested')}<span class="delayed-label" ${event.delayed?'':'hidden'}>Delayed delivery</span></h2><p>${esc(event.crew_name || 'Authorized crew')}. Follow the site emergency procedure and seek urgent help.</p><div class="emergency-times">${esc(occurrence)}, Received ${esc(stamp(event.received_at,{day:'numeric',month:'short'}))}${event.resolved_at?', Device reports local resolution; receipt still needs acknowledgement.':''}</div>${state.ackErrors.has(id)?`<p class="ack-error">${esc(state.ackErrors.get(id))}</p>`:''}</div>`;
     const wrapper=document.createElement('ui-button');wrapper.setAttribute('pending-announcement','Acknowledging receipt');
     const button=document.createElement('button');button.type='button';button.className='button';button.setAttribute('aria-label',`Acknowledge help from ${event.worker_name || 'unassigned watch'}`);button.textContent=pending?'Confirming receipt…':'Acknowledge receipt';
     wrapper.disabled=pending;wrapper.append(button);row.append(wrapper);region.append(row);onAction(button,()=>acknowledge(id));
@@ -227,7 +213,7 @@ async function refreshDashboard() {
 }
 async function changeSite(id) {
   if(!id || id===state.site)return;
-  state.epoch++;state.site=id;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.hour=null;
+  state.epoch++;state.site=id;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.crewSignature='';state.emergencySignature='';state.hour=null;
   $('#emergency-region').replaceChildren();$('#crew-list').innerHTML='<div class="empty-state">Loading the selected site…</div>';$('#suggestions-list').replaceChildren();$('#forecast-hours').replaceChildren();$('#hour-detail').textContent='Waiting for authorized site data.';
   state.busy=false;await refreshDashboard();
 }
