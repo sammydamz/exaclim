@@ -1,0 +1,222 @@
+[
+  {
+    "slide": 1,
+    "text": [
+      "EXACLIM",
+      "Heat forecasts, crew protection and timely help",
+      "Team Name: \nTeam Size: \nProblem Statement: Climate-Resilient Worker Health"
+    ],
+    "notes": "Project: Exaclim. Team name and size intentionally left blank at the user’s request. Problem statement: Climate-Resilient Worker Health. This deck describes the checked hosted software separately from the intended wearable/Android workflow. It does not claim clinical validation."
+  },
+  {
+    "slide": 2,
+    "text": [
+      "Team members*\n[Name, country, role, organization, age confirmation]"
+    ],
+    "notes": "Original template retained; team details intentionally unfilled."
+  },
+  {
+    "slide": 3,
+    "text": [
+      "Team capability summary",
+      "Delivery evidenced by the repository, not unverified qualifications.",
+      "03",
+      "Exaclim’s current capability is evidenced by a working supervisor dashboard, a Hono/TypeScript API on Cloudflare Workers, D1 persistence, privacy-safe crew grouping and durable help acknowledgements. The repository includes automated domain, API and browser checks, plus architecture, hardware and pilot plans. Our delivery covers frontend integration, backend workflows and test-driven iteration. The watch/Android link is simulated for this submission. Occupational-health review, hardware qualification, Android background-BLE engineering, local-language review and site-partner recruitment are the next-stage capabilities to secure. No such partners or approvals are claimed.",
+      "Next team capability to secure: occupational-health and Android / embedded review."
+    ],
+    "notes": "Capability answer: 679 characters, below the 1,000-character limit. No member biographies, degrees, employment history, partnerships or approvals were supplied; none is invented. Team members slide is left untouched. Evidence: docs/demo/verification.md; docs/design/emil-review.md; docs/dashboard-v1/04-implementation-audit.md. Hosted release at preparation: 7c4c7a8, Cloudflare version 7409edd8-bd47-40cf-840b-a2a2987b7bc3. New operational modules in the working tree are not counted as released."
+  },
+  {
+    "slide": 4,
+    "text": [
+      "Architecture and workflow",
+      "Target system, with the current delivery boundary shown explicitly.",
+      "04",
+      "",
+      "Worker watch",
+      "Graded alert\nHelp button",
+      "SIMULATED FOR SUBMISSION",
+      "",
+      "Android gateway",
+      "Local aggregates\nQueued help",
+      "SIMULATED / IN DEVELOPMENT",
+      "",
+      "Workers API",
+      "Hono / TypeScript\nScope + help + ACK",
+      "DEPLOYED CORE API",
+      "",
+      "Supervisor UI",
+      "Forecast / crews / advice\nHelp response",
+      "DEPLOYED",
+      "BLE",
+      "TLS",
+      "",
+      "Private context",
+      "Clothing / acclimatization\nWatch-local target",
+      "PRIVACY BOUNDARY",
+      "",
+      "Public weather",
+      "Open-Meteo\nLive adapter in progress",
+      "PLANNED LIVE INPUT",
+      "",
+      "Cloudflare D1",
+      "Sites / crews\nAssignments / help / ACK",
+      "DEPLOYED",
+      "Cloud boundary",
+      "Routine: groups of ≥3.\nNamed identity: help only.\nACK does not clear help.",
+      "Solid links: deployed core paths. Dashed links: simulated or planned integration. No physical BLE validation claimed."
+    ],
+    "notes": "Diagram boxes and connectors are native editable PowerPoint objects. Current deployed backend persists generated state and acknowledges help. Shared-phone BLE, independent watch operation and live weather integration are not represented as physically verified. R2 is not needed for this version because no uploaded-file workflow is required. Routine cloud responses contain aggregate states; operational assignment identity is separately scoped. Emergency help is an explicit limited identity exception. Dashboard minimum grouping is THREE, superseding old five-person research notes. Watch/shared-phone architecture supersedes the older station-centric report. Hardware remains simulated per the user’s explicit Android direction."
+  },
+  {
+    "slide": 5,
+    "text": [
+      "Target users and intended outcome",
+      "Initial use case: outdoor construction crews in the Accra area, Ghana.",
+      "05",
+      "Supervisor",
+      "See today’s and tomorrow’s heat windows, check crew-level status and plan heavier tasks, breaks and rotation.",
+      "Worker",
+      "Receive simple graded warnings and request help without requiring every worker to own a smartphone.",
+      "Crew lead / site responder",
+      "Carry the shared Android phone, check device readiness and follow the site’s existing emergency procedure.",
+      "Intended outcome",
+      "Earlier recognition and clearer action, with routine individual exposure kept out of the supervisor view.",
+      "Construction first. Logistics and commercial farms require separate site and worker validation."
+    ],
+    "notes": "The primary dashboard role is supervisor; crew lead and responder are operational responsibilities, not extra analytics portals. Ghana is the proposed first setting, not a confirmed pilot partner or exclusive market. English is currently implemented; Twi or another language requires worker-led selection and fluent-speaker review. Intended benefits are hypotheses: no measured reduction in illness, injury or lost work is claimed. Source context: WHO/WMO [1]; prevention actions: NIOSH [2,3]."
+  },
+  {
+    "slide": 6,
+    "text": [
+      "How success will be measured",
+      "Proposed acceptance criteria and pilot measures, not reported field outcomes.",
+      "06"
+    ],
+    "notes": "Target p95 ≤2 seconds is the project’s proposed healthy-network backend-to-dashboard target (PRD section 13), not a measured achieved value and not end-to-end offline radio latency. At least 20 runs are required. Log p50/p95 and missed/duplicate denominators. A separate weak-link cold render target is ≤5s p95 under 400kbps down/100kbps up/400ms RTT plus an outage. These targets are not yet established by the recorded browser checks. Pilot false alarms need an expert-reviewed reference definition, not app-generated labels. Exposure and incident rates require worker-hours / work context and a prospective protocol. Rest adherence is an observation/research measure, not an implemented productivity tracker. No safety control may be withheld for evaluation."
+  },
+  {
+    "slide": 7,
+    "text": [
+      "Evidence supporting the approach",
+      "External evidence motivates the design; software checks establish only software behaviour.",
+      "07",
+      "A substantial occupational-health need [1]",
+      "WHO/WMO (2025), citing ILO, reports over 2.4 billion workers exposed to excessive heat worldwide.",
+      "Established prevention principles [2,3]",
+      "NIOSH recommends acclimatization, hydration, rest, training and supervision. These inform Exaclim’s actions.",
+      "Reproducible prototype evidence [7]",
+      "72 Python reference tests, 16 TypeScript domain tests and 27 Chromium workflow checks passed on generated scenarios.",
+      "Not yet established: physical BLE reliability, calibrated site heat measurement, clinical accuracy or reduced illness."
+    ],
+    "notes": "[1] WHO/WMO news release, 22 August 2025, verified 20 November 2026. It reports >2.4 billion exposed workers and attributes estimates to ILO. No Ghana-specific prevalence or project-specific effect size is inferred. [2] NIOSH Criteria, 2016 publication 2016-106. [3] Current NIOSH workplace recommendations verified 20 November 2026. [7] Existing released/reference evidence: 72 Python tests; 16 deployed-domain tests; 27 local Chromium workflow assertions. Earlier hosted version passed 25 browser checks; counts are different test runs, not 115 independent requirements or a clinical trial. The 48 planned acceptance cases are not all signed off. Working-tree operational extensions have additional unit checks but lack a complete released integration run; omitted from this proof claim. Do not present simulated fault injection as physical field testing."
+  },
+  {
+    "slide": 8,
+    "text": [
+      "Data sources and legal right to use them",
+      "Data minimization applies across ingestion, storage, browser access and future device provisioning.",
+      "08"
+    ],
+    "notes": "Open-Meteo terms and licence pages were directly verified on 20 November 2026: https://open-meteo.com/en/terms and https://open-meteo.com/en/licence. Distinguish the CC BY 4.0 data licence from the Free API’s non-commercial service restriction. Attribution and change indications must be retained; underlying-provider conditions should be checked. Commercial use or higher volume requires a suitable subscription or self-hosted arrangement. No third-party personal dataset, pretrained clinical model or claimed patient-data consent is used. Any real pilot requires a Ghana Act 843 review, controller/processor allocation, registration obligations where applicable, lawful basis, purpose limitation, worker information, retention and cross-border-hosting review. A three-person threshold is an engineering safeguard, not proof of anonymization or legal compliance. Personal setup/response identity remains personal data even when routine summaries are aggregated."
+  },
+  {
+    "slide": 9,
+    "text": [
+      "Risks and safeguards",
+      "Human safety decisions remain with workers, site responders and the supervisor.",
+      "09"
+    ],
+    "notes": "Currently implemented safeguards include scope checks, bounded allowlisted requests, session protections, no-store protected responses, non-overlapping groups, count suppression and receipt semantics. Hardware autonomy, phone outbox hop receipts, credential lifecycle, production identity integration, retention/deletion automation and full security assurance remain development/pilot gates. Do not claim a formal security audit, medical-device certification or clinical validation. Acknowledging receipt must never resolve an active worker help state. Reconnection must not reset the sample time of old data. Red is preserved under uncertainty. On the radio/power failure path, no software queue can guarantee immediate offline delivery. Worker consent does not by itself resolve employment power imbalance or every legal basis."
+  },
+  {
+    "slide": 10,
+    "text": [
+      "Hardware requirements",
+      "Current submission: watch link simulated; Android is the intended shared-phone platform.",
+      "10",
+      "No procurement, battery-life, IP-rating, range or delivered-price claim. Quotes and exact models remain pending."
+    ],
+    "notes": "The user explicitly chose to simulate watch/phone connectivity for this submission and identified Android as the target. This is not a native Android BLE qualification claim. Verified manufacturer candidate: Adafruit Feather nRF52840 Express product 4062, BLE and supported development tooling, accessed 20 November 2026. It is a development board, not a finished certified wrist wearable. No price is quoted because freight, taxes, battery carriage, revision and local availability have not been confirmed. Source actual batteries/drivers/actuators with matched electrical ratings and qualified assembly review. New architecture does not require the older zone-station kit, so its historical budget is not copied. Bench and human-factor trials must verify independent alarms, queue/reboot integrity, runtime, charge safety and glove/sunlight use before any field-reliance statement."
+  },
+  {
+    "slide": 11,
+    "text": [
+      "Application access",
+      "Hosted sign-in verified during preparation on 20 November 2026.",
+      "11",
+      "Open Exaclim",
+      "https://exaclim.kasalite-business.workers.dev",
+      "Sign in → review forecast and crews → open Scenarios → request help → acknowledge receipt.",
+      "Use fictional information only. Public evaluation account; not a real-worker deployment."
+    ],
+    "notes": "Valid hosted access was tested with HTTP 200 login and logout while preparing this document. Credentials are intentionally included to meet the template requirement. No private Cloudflare account token or administrator secret from the development environment is included. This published evaluation account is not suitable for real worker information. The public running release may change; recheck login and all links just before portal upload. Account recovery/site CRUD/gateway upgrades in the uncommitted working tree are not presented as available on the checked release. Repository: https://github.com/sammydamz/exaclim/tree/exaclim-ui-sdk"
+  },
+  {
+    "slide": 12,
+    "text": [
+      "Path to pilot and scale",
+      "Indicative sequence after submission, dependent on people, equipment and approvals.",
+      "12",
+      "Sustainability hypothesis: site subscription + maintained devices. Validate willingness to pay, supplier costs and paid weather access."
+    ],
+    "notes": "No pilot partner, clinician, worker representative, ethics approval or supplier commitment is secured by this document. Proposed sequence, not booked dates. Site permission, appropriate institutional ethics determination, Ghana Act 843/DPC obligations, controller/processor agreements, cross-border hosting and intended-use/device classification review are prerequisites where applicable. Begin in shadow mode; never increase heat exposure, withhold controls or delay care to test Exaclim. A small feasibility study cannot establish reduced heat illness. Scale only after reliability, worker acceptability, equitable access and site response capacity are demonstrated. Commercial use needs a viable maintenance/support model and appropriate weather-service access. Do not reuse the old station/two-badge allowance as a final price per worker."
+  },
+  {
+    "slide": 13,
+    "text": [
+      "Pre-existing IP and third-party materials",
+      "Retain notices and confirm contributor / employer rights before commercial licensing.",
+      "13"
+    ],
+    "notes": "Local package licence metadata verified on 20 November 2026: @ui-sdk/core/react/web 0.1.0-beta.3 Apache-2.0; hono 4.13.19 MIT; react 19.3.1 MIT; @mui/material 9.5.0 MIT; @awesome.me/webawesome 3.15.0 MIT; @fontsource/inter 5.3.0 OFL-1.1; cf 1.0.0-rc.2 MIT OR Apache-2.0. The UI SDK licence is Apache-2.0, not MIT. Material UI/React code is a working-tree upgrade, not a claim that the checked hosted release has finished migration. This editable deck adds native PowerPoint shapes and text; it retains organizer-provided artwork. No training dataset, clinical model weights or clinical certification is claimed. The team must verify actual contributor ownership and any employer/institution assignment or organizer entry-IP terms; those cannot be inferred from Git authorship. Design reference and skill guidance do not grant ownership of Deel branding. Font text uses Liberation Sans on export; organizer artwork remains as supplied."
+  },
+  {
+    "slide": 14,
+    "text": [
+      "Conflict of interest declaration",
+      "Confirmed by the team on 20 November 2026.",
+      "14",
+      "No relationships to disclose",
+      "The team declares no relationships with the organizers, partners or judges that require disclosure.",
+      "If a relevant relationship arises before judging, the team will update the declaration and notify the organizers."
+    ],
+    "notes": "The user explicitly confirmed “No relationships to disclose” on 20 November 2026 in response to the required conflict-of-interest question. This declaration records that confirmation; it is not an independent investigation or an invented assertion. Update if circumstances change before judging."
+  },
+  {
+    "slide": 15,
+    "text": [
+      "Sources and evidence register",
+      "Primary sources checked on 20 November 2026. Full URLs and claim notes are in the speaker notes.",
+      "15",
+      "1",
+      "WHO / WMO, 2025",
+      "Protecting workers from increasing heat stress",
+      "2",
+      "NIOSH, 2016",
+      "Criteria for occupational exposure to heat",
+      "3",
+      "NIOSH, current guidance",
+      "Workplace recommendations: water, rest, acclimatization",
+      "4",
+      "Open-Meteo",
+      "API service terms and CC BY 4.0 attribution",
+      "5",
+      "Ghana Data Protection Commission",
+      "Act 843 and controller / processor obligations",
+      "6",
+      "Adafruit, product 4062",
+      "nRF52840 BLE development-board candidate",
+      "7",
+      "Exaclim repository",
+      "Source, engineering audit and executed checks",
+      "Evidence supports the rationale and tested workflows; it does not validate physical hardware or clinical effectiveness."
+    ],
+    "notes": "[1] WHO / WMO, 2025: Protecting workers from increasing heat stress\nhttps://www.who.int/news/item/22-08-2025-who-wmo-issue-new-report-and-guidance-to-protect-workers-from-increasing-heat-stress\nAccessed 20 November 2026.\n\n[2] NIOSH, 2016: Criteria for occupational exposure to heat\nhttps://www.cdc.gov/niosh/docs/2016-106/default.html\nAccessed 20 November 2026.\n\n[3] NIOSH, current guidance: Workplace recommendations: water, rest, acclimatization\nhttps://www.cdc.gov/niosh/heat-stress/recommendations/index.html\nAccessed 20 November 2026.\n\n[4] Open-Meteo: API service terms and CC BY 4.0 attribution\nhttps://open-meteo.com/en/terms\nAccessed 20 November 2026.\n\n[5] Ghana Data Protection Commission: Act 843 and controller / processor obligations\nhttps://dpc.gov.gh/\nAccessed 20 November 2026.\n\n[6] Adafruit, product 4062: nRF52840 BLE development-board candidate\nhttps://www.adafruit.com/product/4062\nAccessed 20 November 2026.\n\n[7] Exaclim repository: Source, engineering audit and executed checks\nhttps://github.com/sammydamz/exaclim/tree/exaclim-ui-sdk\nAccessed 20 November 2026.\n\nAdditional data licence detail: https://open-meteo.com/en/licence. All listed primary web pages were retrieved successfully during preparation except the repository link, which is the user-authorized project source. A separate attempted NOAA equation page returned HTTP 403 and an attempted ILO publication URL returned 404; neither is used as verified direct-source evidence. The WHO/WMO release supplies the ILO-attributed global exposure statistic. No references are evidence of endorsement of Exaclim."
+  },
+  {
+    "slide": 16,
+    "text": [],
+    "notes": "Organizer closing artwork retained."
+  }
+]

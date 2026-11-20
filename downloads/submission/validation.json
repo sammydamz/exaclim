@@ -1,0 +1,16 @@
+{
+  "slides": 16,
+  "capability_characters": 679,
+  "team_slide_unchanged": true,
+  "team_fields_intentionally_blank": true,
+  "conflict_declaration": "No relationships to disclose; explicitly confirmed by user",
+  "deployed_signin": "Verified HTTP 200 login/logout on 20 November 2026",
+  "unreleased_features_not_claimed": true,
+  "pdf_pages": 16,
+  "rendered_text_within_page_bounds": true,
+  "layout_review": "All 16 slides rendered; architecture and dense tables visually reviewed; no clipped page text detected.",
+  "team_details_excluded_as_requested": true,
+  "coi_confirmation_date": "2026-11-20",
+  "sources_checked": "WHO/WMO; NIOSH criteria and recommendations; Open-Meteo terms/licence; Ghana DPC; Adafruit product 4062",
+  "deck_sha256": "d8fc03226450edf5100b08eddb7d1ef6d884593685b6e695c5262ea53c9eb331"
+}

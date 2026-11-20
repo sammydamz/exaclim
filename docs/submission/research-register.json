@@ -1,0 +1,60 @@
+{
+  "access_date": "2026-11-20",
+  "sources": [
+    {
+      "id": "who",
+      "url": "https://www.who.int/news/item/22-08-2025-who-wmo-issue-new-report-and-guidance-to-protect-workers-from-increasing-heat-stress",
+      "final_url": "https://www.who.int/news/item/22-08-2025-who-wmo-issue-new-report-and-guidance-to-protect-workers-from-increasing-heat-stress",
+      "status": 200
+    },
+    {
+      "id": "ilo",
+      "url": "https://www.ilo.org/publications/heat-work-implications-safety-and-health-global-review-science-policy-and",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "niosh",
+      "url": "https://www.cdc.gov/niosh/heat-stress/recommendations/index.html",
+      "final_url": "https://www.cdc.gov/niosh/heat-stress/recommendations/index.html",
+      "status": 200
+    },
+    {
+      "id": "noaa",
+      "url": "https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml",
+      "error": "HTTP Error 403: Forbidden"
+    },
+    {
+      "id": "weather_terms",
+      "url": "https://open-meteo.com/en/terms",
+      "final_url": "https://open-meteo.com/en/terms",
+      "status": 200
+    },
+    {
+      "id": "weather_licence",
+      "url": "https://open-meteo.com/en/licence",
+      "final_url": "https://open-meteo.com/en/licence",
+      "status": 200
+    },
+    {
+      "id": "ghana_dpc",
+      "url": "https://dataprotection.org.gh/",
+      "final_url": "https://dpc.gov.gh/",
+      "status": 200
+    },
+    {
+      "id": "board",
+      "url": "https://www.adafruit.com/product/4062",
+      "final_url": "https://www.adafruit.com/product/4062",
+      "status": 200
+    }
+  ],
+  "extra_verified_source": {
+    "title": "NIOSH Criteria for a Recommended Standard: Occupational Exposure to Heat and Hot Environments",
+    "url": "https://www.cdc.gov/niosh/docs/2016-106/default.html",
+    "status": 200
+  },
+  "excluded_from_direct_evidence": [
+    "ILO URL returned404",
+    "NOAA equation URL returned403"
+  ]
+}
