@@ -133,7 +133,9 @@ def main():
                 assert 'synthetic-dashboard-v1' not in page.locator('#suggestions-list').inner_text()
                 passed('Core screen uses library cards, concise copy and the three specified areas', ['QA44'])
 
-                expect(page.locator('.mode-note')).to_contain_text('Scenarios')
+                expect(page.locator('#header-utilities #open-demo')).to_have_text('Scenarios')
+                assert page.locator('#connection, #user-label, .avatar, #header-divider, .mode-note').count() == 0
+                assert page.evaluate("getComputedStyle(document.querySelector('.app-header')).borderBottomWidth === '0px'")
                 expect(page.locator('#forecast-provenance')).to_contain_text('Sample forecast')
                 expect(page.locator('#site-timezone')).to_contain_text('Accra')
                 passed('Synthetic source and site timezone are visible in another browser timezone', ['QA01', 'QA02', 'QA42'])

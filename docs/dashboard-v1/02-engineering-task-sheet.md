@@ -2,6 +2,8 @@
 
 Version 1.0 · 19 November 2026 · Planned implementation work, not completed features
 
+> Current status: see [the 20 November implementation audit](04-implementation-audit.md) for the delivered work and remaining gaps. This original plan is preserved as a baseline. Its Python-first deployment proposal was superseded by the user-approved Hono + Workers + D1 stack.
+
 ## 1. How to use this sheet
 
 This sheet implements the accompanying PRD and the 24 original requirement IDs. ENG01–ENG27 are independently assignable work packages with dependencies, acceptance criteria, proposed file targets and QA links. File paths below are proposed destinations unless they already exist. Owner roles are recommended disciplines, not assignments to named people. Estimates are rough productive person-days for an engineer familiar with the stack; they exclude procurement, clinical/legal review and physical test access. Do not add them up as a guaranteed calendar schedule. All implementation status remains Planned.

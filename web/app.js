@@ -73,13 +73,12 @@ async function api(path, body, method = body===undefined ? 'GET' : 'POST') {
 }
 function showAuthenticated() {
   $('#welcome').hidden=true;$('#dashboard').hidden=false;
-  ['#site-switcher','#header-utilities','#header-divider','#header-page'].forEach(selector=>{$(selector).hidden=false;});
-  $('#user-label').textContent=state.user?.name?.replace(/^Demo /, '') || state.user?.display_name || 'Supervisor';
+  ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=false;});
 }
 function clearAuthenticated() {
   state.epoch++;state.busy=false;state.user=null;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.siteSignature='';
   $('#dashboard').hidden=true;$('#welcome').hidden=false;
-  ['#site-switcher','#header-utilities','#header-divider','#header-page'].forEach(selector=>{$(selector).hidden=true;});
+  ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=true;});
   $('#emergency-region').replaceChildren();$('#crew-list').replaceChildren();$('#suggestions-list').replaceChildren();$('#setup-crews').replaceChildren();$('#setup-assignments').replaceChildren();
   ['#setup-dialog','#demo-dialog'].forEach(selector=>{$(selector).open=false;});
 }
@@ -95,8 +94,6 @@ async function signIn() {
 }
 function renderConnection() {
   const offline=state.offline;
-  $('#connection').classList.toggle('offline',offline);
-  $('#connection-text').textContent=offline?'Connection interrupted':'Connected';
   $('#connection-warning').hidden=!offline;
   $('#connection-warning').textContent='Connection lost. Readings may be out of date and new help requests may be delayed. Check the crew phone and follow the site emergency procedure.';
 }

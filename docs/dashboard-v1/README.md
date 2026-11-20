@@ -11,3 +11,5 @@ Editable sheets: `engineering-tasks.csv`, `qa-cases.csv`, and `requirements-trac
 The original 24 IDs (D1–D15, P1–P3, S1–S3, U1–U3) are all linked to tasks and target tests. All new target QA cases are Not run. Passing old tests is not evidence of new requirements being implemented. The main product changes are supervisor-only UI, watch/crew-phone architecture, grouping to a minimum of three, named help exception, durable acknowledgement and watch-local private issuance settings.
 
 Run document checks with `python3 scripts/check_dashboard_spec.py`. Export PDFs with `python3 scripts/export_dashboard_spec.py --output /workspace/artifacts/exaclim-dashboard-spec`. The export requires the optional ReportLab dependency already used by the project's report tooling. This work package changes planning documents and tooling only; it does not silently build or claim the redesigned application.
+
+Current implementation status: [27-job engineering audit](04-implementation-audit.md), with [editable CSV](implementation-audit.csv) and [JSON](implementation-audit.json). Updated 20 November 2026.

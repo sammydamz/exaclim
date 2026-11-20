@@ -1,0 +1,222 @@
+{
+  "date": "2026-11-20",
+  "basis": "Repository inspection and previously recorded execution evidence; not a new full acceptance run.",
+  "tasks": [
+    {
+      "id": "ENG01",
+      "title": "Approve source baseline, contracts and decision register",
+      "audit_status": "Partial",
+      "implemented": "PRD, task sheet and source traceability exist.",
+      "remaining": "Update architecture/contracts to the agreed Hono stack; close outstanding hardware, language and policy decisions.",
+      "evidence": "docs/dashboard-v1/"
+    },
+    {
+      "id": "ENG02",
+      "title": "Implement Deel-inspired Exaclim theme and dashboard shell",
+      "audit_status": "Working software slice",
+      "implemented": "Three-area responsive screen, SDK controls, Web Awesome cards, Inter and Deel-inspired theme.",
+      "remaining": "Final design acceptance and the remaining accessibility review.",
+      "evidence": "index.html; web/styles.css; web/components/ui.js"
+    },
+    {
+      "id": "ENG03",
+      "title": "Add authenticated supervisor identity and server-side site scope",
+      "audit_status": "Partial",
+      "implemented": "Password login, hashed sessions, expiry, site scopes, logout and same-origin mutation checks.",
+      "remaining": "Maintained identity integration, account administration and separate revocable gateway credentials.",
+      "evidence": "cloudflare/worker.ts"
+    },
+    {
+      "id": "ENG04",
+      "title": "Create durable operational schema and versioned API contracts",
+      "audit_status": "Partial",
+      "implemented": "D1 stores sites, crews, assignments, events and receipts in a revision-controlled JSON document; sessions/grants have tables.",
+      "remaining": "Versioned migrations, explicit operational constraints and external gateway contracts; current CAS is not client-facing assignment versioning.",
+      "evidence": "cloudflare/schema.sql; cloudflare/worker.ts"
+    },
+    {
+      "id": "ENG05",
+      "title": "Build site and crew setup flows",
+      "audit_status": "Partial",
+      "implemented": "Edit seeded site name, coordinates and timezone; create crews; persist saves with errors/feedback.",
+      "remaining": "Create additional sites and manage crew edits/removal; finish setup acceptance. Public site creation is absent.",
+      "evidence": "web/app.js; cloudflare/worker.ts"
+    },
+    {
+      "id": "ENG06",
+      "title": "Implement watch assignment and versioned issuance identity",
+      "audit_status": "Partial",
+      "implemented": "Create a minimal watch assignment; reject duplicate watch IDs.",
+      "remaining": "Transfer/revoke watches, assignment versions, audit and attribution of delayed help to the wearer at occurrence.",
+      "evidence": "cloudflare/domain.ts"
+    },
+    {
+      "id": "ENG07",
+      "title": "Implement non-overlapping privacy groups and response filtering",
+      "audit_status": "Partial",
+      "implemented": "Server-side non-overlapping small-crew grouping and suppression below three valid contributors.",
+      "remaining": "Membership-version and invalidation behavior for transfers, removal and real gateway updates.",
+      "evidence": "cloudflare/domain.ts; tests/cloudflare-domain.test.ts"
+    },
+    {
+      "id": "ENG08",
+      "title": "Extend public weather adapter to site-local today/tomorrow",
+      "audit_status": "Partial",
+      "implemented": "Generated site-local today/tomorrow hours, DST and stale forecast handling.",
+      "remaining": "A live public-weather adapter in the deployed TypeScript service, provider failures, cache and provenance. The older Python adapter is not wired into Workers.",
+      "evidence": "cloudflare/domain.ts; exaclim/forecast.py"
+    },
+    {
+      "id": "ENG09",
+      "title": "Version risk classification and conservative policy interfaces",
+      "audit_status": "Partial",
+      "implemented": "Versioned illustrative policy, cautious unknown/stale state and help severity floor.",
+      "remaining": "Occupational policy review and validated risk inputs before operational claims.",
+      "evidence": "cloudflare/domain.ts; exaclim/engine.py"
+    },
+    {
+      "id": "ENG10",
+      "title": "Implement gateway aggregate ingestion and current crew state",
+      "audit_status": "Partial",
+      "implemented": "Generated crew snapshots exercise completeness, sample age and severity preservation.",
+      "remaining": "Authenticated aggregate ingestion endpoint, gateway scope, sequence/replay validation and distinct-watch contract enforcement for incoming batches.",
+      "evidence": "cloudflare/domain.ts; cloudflare/worker.ts"
+    },
+    {
+      "id": "ENG11",
+      "title": "Build explainable suggestions from forecast and group summary",
+      "audit_status": "Partial",
+      "implemented": "Rule-based action/window recommendations and manual-check fallback.",
+      "remaining": "Connect real forecast and accepted aggregate inputs; review policy. Current advice is generic, not personalized exposure-based rest calculation.",
+      "evidence": "cloudflare/domain.ts"
+    },
+    {
+      "id": "ENG12",
+      "title": "Persist and deduplicate authorized help events",
+      "audit_status": "Partial",
+      "implemented": "Generated named help, occurrence/receipt times and delayed delivery persist.",
+      "remaining": "Authorized gateway help ingestion, stable external event IDs, replay deduplication and assignment-version attribution.",
+      "evidence": "cloudflare/domain.ts; cloudflare/worker.ts"
+    },
+    {
+      "id": "ENG13",
+      "title": "Implement atomic acknowledgement receipts",
+      "audit_status": "Working software slice",
+      "implemented": "Durable, idempotent first acknowledgement with site authorization; independent unresolved-help floor.",
+      "remaining": "Retest against external gateway events when that integration exists.",
+      "evidence": "cloudflare/worker.ts; tests/cloudflare-domain.test.ts; scripts/check_cloudflare.py"
+    },
+    {
+      "id": "ENG14",
+      "title": "Build today/tomorrow forecast and high-risk windows",
+      "audit_status": "Working software slice",
+      "implemented": "Today/tomorrow hourly display, keyboard details, high-risk windows, source label and stale fallback.",
+      "remaining": "Connect the live adapter and complete all mapped acceptance cases.",
+      "evidence": "web/app.js; scripts/check_dashboard_v1.py"
+    },
+    {
+      "id": "ENG15",
+      "title": "Build crew cards with grouping, completeness and freshness",
+      "audit_status": "Working software slice",
+      "implemented": "Grouped crew counts, suppression, stale/incomplete and help states, with no routine individual drilldown.",
+      "remaining": "Exercise real incoming gateway changes and the full mapped test matrix.",
+      "evidence": "web/app.js; cloudflare/domain.ts"
+    },
+    {
+      "id": "ENG16",
+      "title": "Build suggested break/rotation cards",
+      "audit_status": "Working software slice",
+      "implemented": "Recommendation cards show action/window, reason and incomplete-reading fallback.",
+      "remaining": "Real-data/policy integration remains under ENG08/09/10/11.",
+      "evidence": "web/app.js"
+    },
+    {
+      "id": "ENG17",
+      "title": "Build priority named help banner and receipt feedback",
+      "audit_status": "Working software slice",
+      "implemented": "Priority named help, delayed delivery, pending/error feedback and confirmed acknowledgement behavior.",
+      "remaining": "Complete screen-reader and multi-event release review; gateway delivery remains separate.",
+      "evidence": "web/app.js; scripts/check_dashboard_v1.py"
+    },
+    {
+      "id": "ENG18",
+      "title": "Implement live updates, bounded polling and stale/offline cache policy",
+      "audit_status": "Partial",
+      "implemented": "One-second polling, local aging, network failure handling and logout/site-switch clearing.",
+      "remaining": "Server event stream, reconnect cursor, polling backoff and tested weak-network behavior. No SSE route exists.",
+      "evidence": "web/app.js; cloudflare/worker.ts"
+    },
+    {
+      "id": "ENG19",
+      "title": "Implement local-only clothing/acclimatization provisioning",
+      "audit_status": "Not implemented",
+      "implemented": "Cloud rejects private clothing/acclimatization fields.",
+      "remaining": "Actual local phone-to-watch provisioning and device-confirmed receipt. Rejecting cloud fields does not implement provisioning.",
+      "evidence": "No gateway/provisioning or firmware/provisioning implementation"
+    },
+    {
+      "id": "ENG20",
+      "title": "Qualify watch and implement autonomous alert firmware",
+      "audit_status": "Not implemented",
+      "implemented": "Hardware research and planning are separate documentation.",
+      "remaining": "Qualified watch, autonomous LED/vibration/button firmware, reboot persistence, radio protocol and power evidence.",
+      "evidence": "No firmware implementation"
+    },
+    {
+      "id": "ENG21",
+      "title": "Build qualified shared-phone BLE gateway",
+      "audit_status": "Not implemented",
+      "implemented": "Server-side scenarios represent phone connection changes.",
+      "remaining": "Shared-phone Android BLE gateway, local aggregation and physical/background compatibility. A server scenario is not a standalone gateway adapter.",
+      "evidence": "No gateway/android or gateway/simulator implementation"
+    },
+    {
+      "id": "ENG22",
+      "title": "Implement durable queues, hop receipts and delayed-event reconciliation",
+      "audit_status": "Partial",
+      "implemented": "Server-side persisted pending-help list, reconnect replay and delayed timestamps.",
+      "remaining": "Watch/phone durable queues, independent hop receipts, reboot/pressure tests and reassignment reconciliation.",
+      "evidence": "cloudflare/domain.ts; tests/cloudflare-domain.test.ts"
+    },
+    {
+      "id": "ENG23",
+      "title": "Implement reviewed local acclimatization progression",
+      "audit_status": "Not implemented",
+      "implemented": "No deployed progression logic.",
+      "remaining": "Local qualifying-day rules, reviewed progression/decay and reboot/reassignment handling.",
+      "evidence": "No firmware/acclimatization implementation"
+    },
+    {
+      "id": "ENG24",
+      "title": "Build V1 fixtures and automated integration/browser coverage",
+      "audit_status": "Partial",
+      "implemented": "72 Python tests, 16 TypeScript domain tests and 25 browser checks were recorded; old UI assumptions replaced.",
+      "remaining": "Complete requirement-linked acceptance coverage and deployed Worker route regression suite. Python API passes do not automatically validate Hono routes.",
+      "evidence": "tests/; scripts/check_cloudflare.py; scripts/check_dashboard_v1.py"
+    },
+    {
+      "id": "ENG25",
+      "title": "Review privacy, security, retention and credential lifecycle",
+      "audit_status": "Partial",
+      "implemented": "Field allowlists, site scopes, session protections, no-store responses and targeted privacy checks.",
+      "remaining": "Retention/deletion policy, credential lifecycle, access audit, provisioning review and formal privacy/security review.",
+      "evidence": "cloudflare/worker.ts; docs/demo/verification.md"
+    },
+    {
+      "id": "ENG26",
+      "title": "Validate usability, accessibility, performance and supported capacity",
+      "audit_status": "Partial",
+      "implemented": "Keyboard paths and desktop/tablet/mobile sizes exercised; screenshot evidence exists.",
+      "remaining": "Screen-reader, full contrast audit, outdoor/large text, weak-network, p95 latency and capacity measurements.",
+      "evidence": "docs/evidence/; scripts/check_dashboard_v1.py"
+    },
+    {
+      "id": "ENG27",
+      "title": "Assemble traceable release evidence and reviewed handover",
+      "audit_status": "Partial",
+      "implemented": "Cloudflare deployment, Git hashes, runbooks, screenshots and test reports exist.",
+      "remaining": "Reconcile stale planning/release checklist, close remaining gates and perform recording/rehearsal and reviewed handover.",
+      "evidence": "docs/demo/; docs/evidence/"
+    }
+  ]
+}
