@@ -147,7 +147,7 @@ function renderForecast(force=false) {
   const window=$('#risk-window');
   window.classList.toggle('red-window',windows.length>0 && !state.offline && !forecast?.stale);
   window.classList.toggle('neutral-window',state.offline || forecast?.stale || !hours.length);
-  const windowText=state.offline?'Offline. Check site conditions.':forecast?.stale?'Forecast out of date. Check site conditions.':windows.length?windows.map(item=>`${state.day==='today'?'Today':'Tomorrow'} ${windowTime(item.start)}–${windowTime(item.end)}: ${(item.label || 'High heat risk').replace(/high-risk scenario window/i,'High heat risk')}`).join(', '):hours.length?'No red periods forecast. Check conditions before starting work.':'No forecast available for this day. Use the manual site assessment.';
+  const windowText=state.offline?'Offline. Check site conditions.':forecast?.stale?'Forecast out of date. Check site conditions.':windows.length?windows.map(item=>`${state.day==='today'?'Today':'Tomorrow'} ${windowTime(item.start)}–${windowTime(item.end)}: ${(item.label || 'High heat risk').replace(/high-risk scenario window/i,'High heat risk')}`).join(', '):hours.some(hour=>forecastLevel(hour)==='unknown')?'Forecast incomplete. Check conditions on site.':hours.length?'No red periods forecast. Check conditions before starting work.':'No forecast available for this day. Use the manual site assessment.';
   window.innerHTML=`${icon(windows.length?'warning':'clock')}<span>${esc(windowText)}</span>`;
   const container=$('#forecast-hours');const previousScroll=$('.forecast-scroll').scrollLeft;
   container.replaceChildren();
@@ -161,7 +161,7 @@ function renderForecast(force=false) {
     wrapper.append(button);container.append(wrapper);onAction(button,()=>detailHour(index));
   });
   $('.forecast-scroll').scrollLeft=previousScroll;
-  $('#forecast-provenance').textContent=`Sample forecast${forecast?.fetched_at?`, Updated ${stamp(forecast.fetched_at,{day:'numeric',month:'short'})}`:''}`;
+  $('#forecast-provenance').textContent=`${forecast?.source_type==='live'?'Weather data by Open-Meteo (CC BY 4.0)':forecast?.source_type==='unavailable'?'Public weather unavailable':'Sample forecast'}${forecast?.fetched_at?`, Updated ${stamp(forecast.fetched_at,{day:'numeric',month:'short'})}`:''}`;
   if(hours.length)detailHour(Math.min(state.hour??Math.min(8,hours.length-1),hours.length-1));
 }
 function renderCrews() {

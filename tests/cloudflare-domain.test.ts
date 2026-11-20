@@ -164,3 +164,14 @@ test('weather payloads are validated and stale caches degrade to unknown without
  assert.equal(stale.stale,true);assert.equal(stale.data_quality,'stale');assert.ok(stale.days[0].hours.every(h=>h.display_risk==='unknown'));
  assert.ok(JSON.stringify(stale).includes('Open-Meteo'));
 });
+
+test('public dashboard keeps worker help visible when the weather provider is unavailable',()=>{
+ const state=initialState(NOW);
+ scenario(state,'accra','help',NOW);
+ const result=snapshot(state,'accra',NOW,true);
+ assert.equal(result.forecast.source_type,'unavailable');
+ assert.equal(result.forecast.fetched_at,undefined);
+ assert.deepEqual(result.forecast.days,[]);
+ assert.ok(result.emergencies.length);
+ assert.ok(result.suggestions.every(s=>s.window===null));
+});

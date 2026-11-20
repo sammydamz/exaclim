@@ -116,7 +116,7 @@ function localISO(date:Date,zone:string):string {
 interface Window {start:string;end:string;start_local:string;end_local:string}
 export interface ForecastRow {start:string;end:string;local_time:string;label:string;risk:Level;temperature_c:number|null;humidity_pct:number|null;source_type:string;data_quality:string;caution:boolean;display_risk:Level|'unknown'}
 export interface Forecast {source:string;source_type:string;provider:string;generated_at:string;fetched_at?:string;stale:boolean;age_seconds:number;data_quality:string;provider_issue_time:string|null;timezone:string;latitude:number;longitude:number;days:{date:string;label:string;hours:ForecastRow[];red_windows:Window[];windows:Window[]}[];policy_version:string;limitations:string}
-function forecastFor(site:Site,clock:Date) {
+function forecastFor(site:Site,clock:Date):Forecast {
   const today=dateLabel(localParts(clock,site.timezone)),age=(clock.getTime()-now(site.forecast_generated_at).getTime())/1000,stale=age>21600||age<0;
   const days=[];
   for(let offset=0;offset<2;offset++) {
@@ -160,22 +160,30 @@ function liveForecastFor(site:Site,clock:Date):Forecast|null {
     const hours:ForecastRow[]=[],windows:Window[]=[];let window:Window|null=null;
     for(let millis=start.getTime();millis<end.getTime();millis+=3600000) {
       const instant=new Date(millis),next=new Date(Math.min(millis+3600000,end.getTime())),local=localISO(instant,site.timezone),hour=localParts(instant,site.timezone).hour;
-      const key=local.slice(0,13)+':00',reading=cache.hours[key],known=reading!==undefined&&typeof reading.temperature_c==='number';
-      const temperature=known?(reading as {temperature_c:number}).temperature_c:null;
-      const level:Level=temperature!==null&&temperature>=32?'red':temperature!==null&&temperature>=29?'amber':'green';
+      const key=local.slice(0,13)+':00',reading=cache.hours[key];
+      const temperature=reading?.temperature_c??null;
+      const known=temperature!==null&&Number.isFinite(temperature);
+      const level:Level=known&&temperature>=32?'red':known&&temperature>=29?'amber':'green';
       const row:ForecastRow={start:iso(instant),end:iso(next),local_time:local,label:`${pad(hour)}:${pad(localParts(instant,site.timezone).minute)} ${local.slice(-6).replace(':','')}`,risk:level,temperature_c:temperature,humidity_pct:reading?.humidity_pct??null,source_type:'live',data_quality:known?'live':'missing',caution:!known,display_risk:known&&!stale?level:'unknown'};
       hours.push(row);
-      if(known&&level==='red'&&!window)window={start:row.start,end:row.end,start_local:local,end_local:localISO(next,site.timezone)};
-      else if(known&&level==='red'&&window){window.end=row.end;window.end_local=localISO(next,site.timezone);}
+      if(!stale&&known&&level==='red'&&!window)window={start:row.start,end:row.end,start_local:local,end_local:localISO(next,site.timezone)};
+      else if(!stale&&known&&level==='red'&&window){window.end=row.end;window.end_local=localISO(next,site.timezone);}
       else if(window){windows.push(window);window=null;}
     }
     if(window)windows.push(window);
     days.push({date,label:offset===0?'Today':'Tomorrow',hours,red_windows:windows,windows});
   }
-  return {source:`Live public weather via Open-Meteo — fetched ${cache.fetched_at}`,source_type:'live',provider:'Open-Meteo',generated_at:iso(clock),fetched_at:cache.fetched_at,stale,age_seconds:Math.max(0,age),data_quality:stale?'stale':'live',provider_issue_time:cache.provider_issue_time,timezone:site.timezone,latitude:site.latitude,longitude:site.longitude,days,policy_version:POLICY_VERSION,limitations:'Air-temperature illustration; not WBGT or clinical thresholds.'};
+  return {source:`Live public weather via Open-Meteo — fetched ${cache.fetched_at}`,source_type:'live',provider:'Open-Meteo',generated_at:iso(clock),fetched_at:cache.fetched_at,stale,age_seconds:Math.max(0,age),data_quality:stale?'stale':'live',provider_issue_time:cache.provider_issue_time,timezone:site.timezone,latitude:site.latitude,longitude:site.longitude,days,policy_version:POLICY_VERSION,limitations:'Air-temperature screening. Not WBGT or occupational work/rest limits.'};
 }
-export function snapshot(state:State,siteId='accra',at?:Clock) {
-  const site=siteFor(state,siteId),clock=now(at),forecast=liveForecastFor(site,clock)??forecastFor(site,clock),groups=[],suggestions=[];
+export function snapshot(state:State,siteId='accra',at?:Clock, publicWeatherOnly=false) {
+  const site=siteFor(state,siteId),clock=now(at);
+  const forecast:Forecast=liveForecastFor(site,clock)??(publicWeatherOnly?{
+    source:'Public weather unavailable',source_type:'unavailable',provider:'Open-Meteo',
+    generated_at:iso(clock),provider_issue_time:null,days:[],stale:true,age_seconds:0,
+    data_quality:'missing',timezone:site.timezone,latitude:site.latitude,longitude:site.longitude,
+    policy_version:POLICY_VERSION,limitations:'Check conditions on site.'
+  }:forecastFor(site,clock));
+  const groups=[],suggestions=[];
   for(const crews of privacyGroups(site)) {
     const ids=crews.map(c=>c.id),watchIds=crews.flatMap(c=>c.watch_ids),expected=crews.reduce((a,c)=>a+c.count,0),fresh:Sample[]=[],known:Level[]=[],sampleTimes:number[]=[],receiptTimes:number[]=[];
     for(const watch of watchIds) {
@@ -192,7 +200,7 @@ export function snapshot(state:State,siteId='accra',at?:Clock) {
     groups.push(group);
     const windows=forecast.days.flatMap(d=>d.red_windows).filter(w=>now(w.end)>clock),window=windows.length&&!forecast.stale?windows[0]:null;
     const action=active.length?'Follow the site emergency procedure. Acknowledgement confirms receipt, not resolution.':overall==='red'?'Pause the affected task; arrange cooling and review rotation under the site heat-control plan.':unknown||suppressed?'Check the crew connection and use general site heat controls; no exposure-based rest duration is available.':forecast.stale?'Forecast is stale; check current conditions and use general site heat controls rather than a precise planning window.':window?'Plan heavier tasks outside the upcoming high-risk window; prepare shaded breaks and review rotation.':'Maintain site heat controls and review conditions before changing task intensity.';
-    suggestions.push({group_id:id,group_name:group.name,state:overall,title:unknown||suppressed?'Review site controls':'Plan breaks and rotation',level:overall,reason:'Uses the most cautious group state and upcoming forecast; uncertainty never lowers caution.',action,window,policy_version:POLICY_VERSION,source:'Synthetic forecast + simulated privacy-safe group state',data_quality:unknown||suppressed?'incomplete':forecast.stale?'stale':'synthetic',limitations:'Advice — supervisor decides. No clinical rest prescription or safe-work allowance.'});
+    suggestions.push({group_id:id,group_name:group.name,state:overall,title:unknown||suppressed?'Review site controls':'Plan breaks and rotation',level:overall,reason:'Uses the most cautious group state and upcoming forecast; uncertainty never lowers caution.',action,window,policy_version:POLICY_VERSION,source:forecast.source+' and simulated crew readings',data_quality:unknown||suppressed?'incomplete':forecast.stale?'stale':'synthetic',limitations:'Advice — supervisor decides. No clinical rest prescription or safe-work allowance.'});
   }
   const emergencies=site.events.filter(e=>!e.acknowledged_at).map(e=>({id:e.id,worker_name:e.worker_name,watch_id:e.watch_id,crew_id:e.crew_id,occurred_at:e.occurred_at,received_at:e.received_at,acknowledged_at:e.acknowledged_at,acknowledged_by:e.acknowledged_by,resolved_at:e.resolved_at,delayed:e.delayed,crew_name:crewFor(site,e.crew_id).name})).sort((a,b)=>a.occurred_at.localeCompare(b.occurred_at)||a.id.localeCompare(b.id));
   return {site:{id:site.id,name:site.name,latitude:site.latitude,longitude:site.longitude,timezone:site.timezone},mode:'Synthetic demo — no real workers or devices',policy_version:POLICY_VERSION,generated_at:iso(clock),scenario:site.scenario,forecast,groups,suggestions,emergencies,active_help_count:site.events.filter(e=>!e.resolved_at).length,weather_source:forecast.source_type};
