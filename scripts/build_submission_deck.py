@@ -17,7 +17,7 @@ args=parser.parse_args()
 ROOT=Path(__file__).resolve().parents[1];OUT=args.output_dir;OUT.mkdir(parents=True,exist_ok=True)
 TEMPLATE=args.template
 r=Presentation(TEMPLATE)
-FONT='Liberation Sans';INK='292522';MUTED='665D56';ACCENT='246A66';BEIGE='F4F0E9';BORDER='DCD5CC';WHITE='FFFFFF';BROWN='7D6A5C'
+FONT='Liberation Sans';INK='182F30';MUTED='465D5B';ACCENT='00685E';BEIGE='E6F0EC';BORDER='B8CFC8';WHITE='FFFFFF';BROWN='193E3A'
 URL='https://exaclim.kasalite-business.workers.dev';REPO='https://github.com/sammydamz/exaclim/tree/exaclim-ui-sdk'
 refs=[
 ('1','WHO / WMO, 2025','Protecting workers from increasing heat stress','https://www.who.int/news/item/22-08-2025-who-wmo-issue-new-report-and-guidance-to-protect-workers-from-increasing-heat-stress'),
@@ -43,8 +43,8 @@ def clear_body(index,title,subtitle=None):
  for sh in list(s.shapes):
   if sh.has_text_frame:
    sh._element.getparent().remove(sh._element)
- text(s,.4,.94,9.2,.38,title,19,True,BROWN)
- if subtitle:text(s,.4,1.36,9.2,.30,subtitle,10.5,False,MUTED)
+ text(s,.4,.94,9.2,.38,title,22,True,BROWN)
+ if subtitle:text(s,.4,1.40,9.2,.30,subtitle,10.5,False,MUTED)
  text(s,9.23,5.25,.38,.19,str(index).zfill(2),8.5,False,MUTED)
  return s
 
@@ -63,19 +63,19 @@ def table(s,x,y,width,headers,rows,colwidths,font=12.5,row_h=.55):
  for ri,row in enumerate([headers]+rows):
   for ci,txt in enumerate(row):
    c=t.cell(ri,ci);c.text=txt;c.margin_left=Inches(.10);c.margin_right=Inches(.09);c.margin_top=Inches(.075);c.margin_bottom=Inches(.055);c.vertical_anchor=MSO_ANCHOR.MIDDLE
-   c.fill.solid();c.fill.fore_color.rgb=col(BEIGE if ri==0 else ('FAF8F4' if ri%2 else WHITE))
+   c.fill.solid();c.fill.fore_color.rgb=col('174C47' if ri==0 else (BEIGE if ci==0 else ('F7F9F8' if ri%2 else WHITE)))
    for p in c.text_frame.paragraphs:
     p.space_after=Pt(1);p.line_spacing=1.05
-    for run in p.runs:run.font.name=FONT;run.font.size=Pt(font);run.font.bold=ri==0;run.font.color.rgb=col(INK)
+    for run in p.runs:run.font.name=FONT;run.font.size=Pt(font);run.font.bold=ri==0 or ci==0;run.font.color.rgb=col(WHITE if ri==0 else INK)
    tcPr=c._tc.get_or_add_tcPr()
    for edge in ['lnL','lnR','lnT','lnB']:
     ln=OxmlElement('a:'+edge);ln.set('w','4000');fill=OxmlElement('a:solidFill');rgb=OxmlElement('a:srgbClr');rgb.set('val',WHITE);fill.append(rgb);ln.append(fill);tcPr.append(ln)
  return shape
 
 def box(s,x,y,w,h,title,body,status=None):
- sh=s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,Inches(x),Inches(y),Inches(w),Inches(h));sh.adjustments[0]=.07;sh.fill.solid();sh.fill.fore_color.rgb=col(BEIGE);sh.line.color.rgb=col(BORDER);sh.line.width=Pt(.7);sh._element.spPr.append(OxmlElement('a:effectLst'))
- text(s,x+.12,y+.14,w-.24,.26,title,12.8,True,INK)
- text(s,x+.12,y+.48,w-.24,h-.54,body,10.8,False,MUTED)
+ sh=s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,Inches(x),Inches(y),Inches(w),Inches(h));sh.adjustments[0]=.07;sh.fill.solid();sh.fill.fore_color.rgb=col('174C47' if status and status.startswith('DEPLOYED') else BEIGE);sh.line.color.rgb=col(BORDER);sh.line.width=Pt(.7);sh._element.spPr.append(OxmlElement('a:effectLst'))
+ text(s,x+.12,y+.14,w-.24,.26,title,12.8,True,WHITE if status and status.startswith('DEPLOYED') else INK)
+ text(s,x+.12,y+.48,w-.24,h-.54,body,10.8,False,WHITE if status and status.startswith('DEPLOYED') else MUTED)
  if status:text(s,x,y-.25,w,.2,status,8.5,True,ACCENT)
  return sh
 
@@ -87,29 +87,31 @@ def arrow(s,x1,y1,x2,y2,dashed=False):
 
 # Cover: team fields intentionally blank.
 s=r.slides[0];s.shapes[2]._element.getparent().remove(s.shapes[2]._element)
-text(s,.48,3.27,9.0,.43,'EXACLIM',25,True,BROWN)
-text(s,.48,3.81,9.0,.35,'Heat forecasts, crew protection and timely help',16)
+text(s,.48,3.27,9.0,.43,'Exaclim',32,True,BROWN)
+text(s,.48,3.94,9.0,.35,'Heat forecasts, crew protection and timely help',16)
 text(s,.48,4.36,9.0,.88,'Team Name: \nTeam Size: \nProblem Statement: Climate-Resilient Worker Health',13)
 note(s,1,'Project: Exaclim. Team name and size intentionally left blank at the user’s request. Problem statement: Climate-Resilient Worker Health. This deck describes the checked hosted software separately from the intended wearable/Android workflow. It does not claim clinical validation.')
 # Slide 2: preserve untouched, including all team placeholders and table.
 
-s=clear_body(3,'Team capability summary','Delivery evidenced by the repository, not unverified qualifications.')
-cap=('Exaclim’s current capability is evidenced by a working supervisor dashboard, a Hono/TypeScript API on Cloudflare Workers, D1 persistence, privacy-safe crew grouping and durable help acknowledgements. The repository includes automated domain, API and browser checks, plus architecture, hardware and pilot plans. Our delivery covers frontend integration, backend workflows and test-driven iteration. The watch/Android link is simulated for this submission. Occupational-health review, hardware qualification, Android background-BLE engineering, local-language review and site-partner recruitment are the next-stage capabilities to secure. No such partners or approvals are claimed.')
-assert len(cap)<=1000
-text(s,.45,1.95,8.95,2.66,cap,15.5)
-text(s,.45,4.92,8.8,.31,'Next team capability to secure: occupational-health and Android / embedded review.',12,False,ACCENT)
+s=clear_body(3,'Team capability summary','What the team has built, tested and identified for field review.')
+cap_start = len(s.shapes)
+label_block(s,.45,1.93,4.25,'Delivered','The supervisor dashboard runs on Cloudflare Workers. A Hono API written in TypeScript stores crews and help acknowledgements in D1.',1.65)
+label_block(s,5.05,1.93,4.35,'Tested','Automated domain, API and browser checks cover crew privacy and help response. The repository includes the hardware design and pilot plan.',1.65)
+label_block(s,.45,3.66,8.9,'Before a field pilot','The Android and watch connection is simulated. Next steps are hardware qualification, Android background BLE testing, occupational-health and local-language review, and site recruitment.',1.2)
+cap = ' '.join(shape.text for shape in list(s.shapes)[cap_start:] if shape.has_text_frame)
+assert len(cap) <= 1000
 note(s,3,f'Capability answer: {len(cap)} characters, below the 1,000-character limit. No member biographies, degrees, employment history, partnerships or approvals were supplied; none is invented. Team members slide is left untouched. Evidence: docs/demo/verification.md; docs/design/emil-review.md; docs/dashboard-v1/04-implementation-audit.md. Hosted release at preparation: 7c4c7a8, Cloudflare version 7409edd8-bd47-40cf-840b-a2a2987b7bc3. New operational modules in the working tree are not counted as released.')
 
-s=clear_body(4,'Architecture and workflow','Target system, with the current delivery boundary shown explicitly.')
-box(s,.4,1.98,2.04,1.13,'Worker watch','Graded alert\nHelp button','SIMULATED FOR SUBMISSION')
-box(s,2.8,1.98,2.04,1.13,'Android gateway','Local aggregates\nQueued help','SIMULATED / IN DEVELOPMENT')
+s=clear_body(4,'Architecture and workflow','How a worker’s help request reaches the supervisor, and where the record is kept.')
+box(s,.4,1.98,2.04,1.13,'Worker watch','Graded alert\nHelp button','SIMULATED')
+box(s,2.8,1.98,2.04,1.13,'Android gateway','Local aggregates\nQueued help','SIMULATED')
 box(s,5.2,1.98,2.04,1.13,'Workers API','Hono / TypeScript\nScope + help + ACK','DEPLOYED CORE API')
-box(s,7.6,1.98,2.0,1.13,'Supervisor UI','Forecast / crews / advice\nHelp response','DEPLOYED')
+box(s,7.6,1.98,2.0,1.13,'Supervisor UI','Crew overview\nHelp response','DEPLOYED')
 arrow(s,2.44,2.53,2.8,2.53,True);arrow(s,4.84,2.53,5.2,2.53,True);arrow(s,7.24,2.53,7.6,2.53)
 text(s,2.46,2.12,.32,.2,'BLE',8,False,MUTED);text(s,4.87,2.12,.3,.2,'TLS',8,False,MUTED)
 box(s,.4,3.66,2.04,1.08,'Private context','Clothing / acclimatization\nWatch-local target','PRIVACY BOUNDARY')
 box(s,2.8,3.66,2.04,1.08,'Public weather','Open-Meteo\nLive adapter in progress','PLANNED LIVE INPUT')
-box(s,5.2,3.66,2.04,1.08,'Cloudflare D1','Sites / crews\nAssignments / help / ACK','DEPLOYED')
+box(s,5.2,3.66,2.04,1.08,'Cloudflare D1','Sites / crews\nHelp and receipts','DEPLOYED')
 text(s,7.6,3.66,2,.28,'Cloud boundary',13,True,ACCENT)
 text(s,7.6,4.04,2,.79,'Routine: groups of ≥3.\nNamed identity: help only.\nACK does not clear help.',11.5)
 arrow(s,4.84,4.14,5.2,3.11,True);arrow(s,6.22,3.11,6.22,3.66)
@@ -134,10 +136,14 @@ table(s,.42,1.87,9.15,['Measure','Definition / test','Acceptance or interpretati
 note(s,6,'Target p95 ≤2 seconds is the project’s proposed healthy-network backend-to-dashboard target (PRD section 13), not a measured achieved value and not end-to-end offline radio latency. At least 20 runs are required. Log p50/p95 and missed/duplicate denominators. A separate weak-link cold render target is ≤5s p95 under 400kbps down/100kbps up/400ms RTT plus an outage. These targets are not yet established by the recorded browser checks. Pilot false alarms need an expert-reviewed reference definition, not app-generated labels. Exposure and incident rates require worker-hours / work context and a prospective protocol. Rest adherence is an observation/research measure, not an implemented productivity tracker. No safety control may be withheld for evaluation.')
 
 s=clear_body(7,'Evidence supporting the approach','External evidence motivates the design; software checks establish only software behaviour.')
-label_block(s,.45,1.83,8.9,'A substantial occupational-health need [1]','WHO/WMO (2025), citing ILO, reports over 2.4 billion workers exposed to excessive heat worldwide.',.78)
-label_block(s,.45,2.76,8.9,'Established prevention principles [2,3]','NIOSH recommends acclimatization, hydration, rest, training and supervision. These inform Exaclim’s actions.',.85)
-label_block(s,.45,3.77,8.9,'Reproducible prototype evidence [7]','72 Python reference tests, 16 TypeScript domain tests and 27 Chromium workflow checks passed on generated scenarios.',.85)
-text(s,.45,4.88,8.9,.39,'Not yet established: physical BLE reliability, calibrated site heat measurement, clinical accuracy or reduced illness.',11.2,False,MUTED)
+text(s,.45,1.85,4.3,.65,'Over 2.4 billion',31,True,ACCENT)
+text(s,.45,2.59,4.2,.88,'workers worldwide are exposed to excessive heat, according to WHO and WMO, citing ILO [1].',14)
+label_block(s,.45,3.62,4.2,'Prevention guidance [2, 3]','NIOSH recommends acclimatization, hydration, rest, training and supervision.',1.1)
+text(s,5.03,1.94,4.15,.32,'Software checks passed [7]',15,True,INK)
+for y,count,description in [(2.47,'72','Python reference tests'),(3.13,'16','TypeScript domain tests'),(3.79,'27','Chromium workflow checks')]:
+ text(s,5.03,y,.72,.49,count,23,True,ACCENT)
+ text(s,5.87,y+.09,3.55,.38,description,13)
+text(s,.45,4.94,9,.30,'Checks used generated scenarios. Field reliability, clinical accuracy and health outcomes remain unverified.',10.8,False,MUTED)
 note(s,7,'[1] WHO/WMO news release, 22 August 2025, verified 20 November 2026. It reports >2.4 billion exposed workers and attributes estimates to ILO. No Ghana-specific prevalence or project-specific effect size is inferred. [2] NIOSH Criteria, 2016 publication 2016-106. [3] Current NIOSH workplace recommendations verified 20 November 2026. [7] Existing released/reference evidence: 72 Python tests; 16 deployed-domain tests; 27 local Chromium workflow assertions. Earlier hosted version passed 25 browser checks; counts are different test runs, not 115 independent requirements or a clinical trial. The 48 planned acceptance cases are not all signed off. Working-tree operational extensions have additional unit checks but lack a complete released integration run; omitted from this proof claim. Do not present simulated fault injection as physical field testing.')
 
 s=clear_body(8,'Data sources and legal right to use them','Data minimization applies across ingestion, storage, browser access and future device provisioning.')
