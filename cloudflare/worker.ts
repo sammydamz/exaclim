@@ -71,13 +71,13 @@ const WEATHER_TTL_MS=3600000;
 interface OpenMeteoHourly {time:string[];temperature_2m:(number|null)[];relative_humidity_2m:(number|null)[]}
 interface OpenMeteoReply {hourly?:OpenMeteoHourly;generationtime_ms?:number}
 /** Fetch public weather for a site day range from Open-Meteo; no API key. Throws on any upstream problem. */
-async function fetchWeather(latitude:number,longitude:number,startDate:string,endDate:string):Promise<WeatherCache> {
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relative_humidity_2m&start_date=${startDate}&end_date=${endDate}&timeformat=iso8601`;
+async function fetchWeather(latitude:number,longitude:number,startDate:string,endDate:string,timezone:string):Promise<WeatherCache> {
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relative_humidity_2m&start_date=${startDate}&end_date=${endDate}&timeformat=iso8601&timezone=${encodeURIComponent(timezone)}`;
   const response=await fetch(url,{signal:AbortSignal.timeout(8000),headers:{Accept:'application/json'}});
   if(!response.ok)throw new Error(`Weather provider returned ${response.status}`);
   const payload=await response.json() as OpenMeteoReply,hours=payload?.hourly;
-  if(!hours||!Array.isArray(hours.time)||!Array.isArray(hours.temperature_2m)||hours.time.length!==hours.temperature_2m.length)throw new Error('Weather provider returned an unusable payload');
-  const result:WeatherCache={fetched_at:new Date().toISOString(),provider_issue_time:typeof payload.generationtime_ms==='number'?new Date().toISOString():null,hours:{}};
+  if(!hours||!Array.isArray(hours.time)||!Array.isArray(hours.temperature_2m)||!Array.isArray(hours.relative_humidity_2m)||hours.time.length!==hours.relative_humidity_2m.length||hours.time.length!==hours.temperature_2m.length)throw new Error('Weather provider returned an unusable payload');
+  const result:WeatherCache={fetched_at:new Date().toISOString(),provider_issue_time:null,hours:{}};
   hours.time.forEach((local,index)=>{if(!/^\d{4}-\d{2}-\d{2}T\d{2}:00$/.test(local))throw new Error('Weather provider returned unexpected timestamps');result.hours[local.slice(0,13)+':00']={temperature_c:typeof hours.temperature_2m[index]==='number'?hours.temperature_2m[index] as number:null,humidity_pct:typeof hours.relative_humidity_2m[index]==='number'?hours.relative_humidity_2m[index] as number:null};});
   return result;
 }
@@ -90,15 +90,19 @@ function localDates(timezone:string,clock:Date):[string,string] {
 }
 /** Refresh the cached weather for a site when older than the TTL; failures leave the prior cache intact. */
 async function refreshWeather(db:D1Database,state:State,siteId:string):Promise<void> {
-  const current=site(state,siteId),cached=current.weather_cache;
+  const current=site(state,siteId);
+  const key=JSON.stringify(['open-meteo',siteId,current.latitude,current.longitude,current.timezone]);
+  const stored=await db.prepare('SELECT document FROM weather_cache WHERE site_id=?').bind(key).first<{document:string}>();
+  const cached=stored?JSON.parse(stored.document) as WeatherCache:undefined;
+  current.weather_cache=cached;
   if(cached&&Date.now()-Date.parse(cached.fetched_at)<WEATHER_TTL_MS)return;
   const [today,tomorrow]=localDates(current.timezone,new Date());
   try {
-    const payload=await fetchWeather(current.latitude,current.longitude,today,tomorrow);
+    const payload=await fetchWeather(current.latitude,current.longitude,today,tomorrow,current.timezone);
     recordWeather(current,payload,new Date());
-    await db.prepare('INSERT INTO weather_cache(site_id,document,fetched_at) VALUES(?,?,?) ON CONFLICT(site_id) DO UPDATE SET document=excluded.document,fetched_at=excluded.fetched_at').bind(siteId,JSON.stringify(payload),payload.fetched_at).run();
+    await db.prepare('INSERT INTO weather_cache(site_id,document,fetched_at) VALUES(?,?,?) ON CONFLICT(site_id) DO UPDATE SET document=excluded.document,fetched_at=excluded.fetched_at').bind(key,JSON.stringify(payload),payload.fetched_at).run();
   } catch {
-    if(!cached)throw new APIError(503,'weather_unavailable','Live weather is temporarily unavailable. Synthetic scenario data is shown and labeled.');
+    // The dashboard still delivers crew and help records during weather outages.
   }
 }
 /** Resolve a gateway credential from a Bearer token; revoked or unknown tokens are rejected. */
@@ -115,10 +119,10 @@ async function gateway(c:Context<Env>,siteId:string):Promise<{id:string;site_id:
 
 const summary=(s:State['sites'][string])=>({id:s.id,name:s.name,latitude:s.latitude,longitude:s.longitude,timezone:s.timezone});
 function dashboard(state:State,id:string,u:User){
- const raw=snapshot(state,id);
+ const raw=snapshot(state,id,undefined,true);
  // Public adapter matches the existing browser/Python API; no routine individual data.
- const forecast={...raw.forecast,status:'synthetic',fetched_at:raw.forecast.generated_at,days:raw.forecast.days.map(day=>({...day,windows:day.windows.map(w=>({...w,level:'red',label:'High-risk scenario window'})),hours:day.hours.map(h=>({...h,time:h.start,hour:h.local_time,level:raw.forecast.stale?'amber':h.risk,quality:h.data_quality}))}))};
- return {...raw,mode:'synthetic-demo',source:'Synthetic watches, shared-phone gateway and weather scenario',updated_at:raw.generated_at,sites:Object.values(state.sites).filter(s=>u.site_ids.includes(s.id)).map(summary),forecast,groups:raw.groups.map(g=>({...g,suggestion:raw.suggestions.find(s=>s.group_id===g.id),counts:g.counts?{...g.counts,unknown:g.unknown_contributors}:null})),emergencies:raw.emergencies.map(e=>({...e,acknowledged:!!e.acknowledged_at}))};
+ const forecast={...raw.forecast,status:raw.forecast.source_type==='unavailable'?'unavailable':raw.forecast.stale?'stale':raw.forecast.source_type,fetched_at:raw.forecast.fetched_at??null,days:raw.forecast.days.map(day=>({...day,windows:day.windows.map(w=>({...w,level:'red',label:'High heat risk'})),hours:day.hours.map(h=>({...h,time:h.start,hour:h.local_time,level:h.display_risk,quality:h.data_quality}))}))};
+ return {...raw,mode:'synthetic-demo',source:'Sample crew readings',updated_at:raw.generated_at,sites:Object.values(state.sites).filter(s=>u.site_ids.includes(s.id)).map(summary),forecast,groups:raw.groups.map(g=>({...g,suggestion:raw.suggestions.find(s=>s.group_id===g.id),counts:g.counts?{...g.counts,unknown:g.unknown_contributors}:null})),emergencies:raw.emergencies.map(e=>({...e,acknowledged:!!e.acknowledged_at}))};
 }
 app.use('*',async(c,next)=>{
  c.header('X-Content-Type-Options','nosniff');c.header('Referrer-Policy','no-referrer');
@@ -150,7 +154,7 @@ app.get('/api/v1/auth/me',async c=>c.json({user:await user(c),mode:'synthetic-de
 app.post('/api/v1/auth/logout',async c=>{await body(c,[]);const token=getCookie(c,COOKIE);if(token)await c.env.DB.prepare('DELETE FROM sessions WHERE token_hash=?').bind(await digest(token)).run();setCookie(c,COOKIE,'',{path:'/',httpOnly:true,sameSite:'Strict',secure:new URL(c.req.url).protocol==='https:',maxAge:0});return c.json({ok:true});});
 app.get('/api/v1/sites/:id/:operation',async c=>{
  const id=c.req.param('id'),op=c.req.param('operation');if(!['dashboard','setup'].includes(op))return fail(404,'not_found','Endpoint not found.');const u=await user(c,id),{state}=await load(c.env.DB),s=site(state,id);
- if(op==='dashboard'){await refreshWeather(c.env.DB,state,id);state.sites[id]=site(state,id);}
+ if(op==='dashboard')await refreshWeather(c.env.DB,state,id);
  return c.json(op==='dashboard'?dashboard(state,id,u):{site:summary(s),crews:s.crews.map(({id,name,count})=>({id,name,count})),assignments:s.assignments,mode:'synthetic-demo'});
 });
 function validated<T>(fn:()=>T):T {try{return fn();}catch(e){if(e instanceof APIError)throw e;return fail(422,'validation',e instanceof Error?e.message.slice(0,180):'Invalid value.');}}
@@ -169,7 +173,9 @@ app.post('/api/v1/sites/:id/:operation',async c=>{
  if(op==='crews'){const d=await body(c,['name','count']);const crew=await update(c.env.DB,s=>{site(s,id);return validated(()=>addCrew(s,id,d.name as string,d.count as number));});return c.json({crew,...crew},201);}
  if(op==='assignments'){const d=await body(c,['crew_id','worker_name','watch_id']);const assignment=await update(c.env.DB,s=>{site(s,id);return validated(()=>assignWatch(s,id,d.crew_id as string,d.worker_name as string,d.watch_id as string));});return c.json({assignment,...assignment},201);}
  const d=await body(c,['scenario']);if(typeof d.scenario!=='string')return fail(422,'scenario','Choose a named synthetic scenario.');if(!['normal','rising-heat','connection-lost','reconnect','help','delayed-help','resolve-help'].includes(d.scenario))return fail(422,'validation','Unknown scenario');
- const result=await update(c.env.DB,s=>{site(s,id);validated(()=>scenario(s,id,d.scenario as string));return dashboard(s,id,u);});return c.json({ok:true,scenario:d.scenario,dashboard:result});
+ await update(c.env.DB,s=>validated(()=>scenario(s,id,d.scenario as string)));
+ const {state}=await load(c.env.DB);await refreshWeather(c.env.DB,state,id);
+ return c.json({ok:true,scenario:d.scenario,dashboard:dashboard(state,id,u)});
 });
 app.patch('/api/v1/sites/:id/crews/:crewId',async c=>{
   const id=c.req.param('id'),crewId=c.req.param('crewId');await user(c,id);const d=await body(c,['name','count']);
