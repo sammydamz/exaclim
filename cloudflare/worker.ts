@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
 import type { Context } from 'hono';
-import { initialState, snapshot, addCrew, addSite, assignWatch, renameCrew, removeCrew, scenario, acknowledge, recordWeather, type State, type WeatherCache } from './domain';
+import { initialState, snapshot, addCrew, addSite, assignWatch, renameCrew, removeCrew, scenario, acknowledge, recordWeather, validateBatch, applyBatch, validateHelpEvent, applyHelpEvent, type State, type WeatherCache } from './domain';
 
 export interface Bindings { DB:D1Database; ASSETS:Fetcher; EXACLIM_MODE:string }
 type User={id:string;email:string;name:string;site_ids:string[]};
@@ -25,6 +25,7 @@ const schema=[
  'CREATE INDEX IF NOT EXISTS session_expiry ON sessions(expires_at)',
  'CREATE TABLE IF NOT EXISTS login_attempts (key_hash TEXT PRIMARY KEY,count INTEGER NOT NULL,expires_at TEXT NOT NULL)',
  'CREATE TABLE IF NOT EXISTS weather_cache (site_id TEXT PRIMARY KEY,document TEXT NOT NULL CHECK(json_valid(document)),fetched_at TEXT NOT NULL)',
+ 'CREATE TABLE IF NOT EXISTS gateway_credentials (id TEXT PRIMARY KEY,site_id TEXT NOT NULL,token_hash TEXT NOT NULL UNIQUE,created_at TEXT NOT NULL,revoked_at TEXT,last_sequence INTEGER NOT NULL DEFAULT 0)',
 ];
 const bootstraps=new WeakMap<D1Database,Promise<void>>();
 async function bootstrap(db:D1Database) {
@@ -100,6 +101,17 @@ async function refreshWeather(db:D1Database,state:State,siteId:string):Promise<v
     if(!cached)throw new APIError(503,'weather_unavailable','Live weather is temporarily unavailable. Synthetic scenario data is shown and labeled.');
   }
 }
+/** Resolve a gateway credential from a Bearer token; revoked or unknown tokens are rejected. */
+async function gateway(c:Context<Env>,siteId:string):Promise<{id:string;site_id:string;last_sequence:number}> {
+  const header=c.req.header('Authorization')??'';
+  const match=/^Bearer ([A-Za-z0-9-]{16,128})$/.exec(header);
+  if(!match)return fail(401,'gateway_unauthenticated','Provide a gateway Bearer token.');
+  const tokenHash=await digest(match[1]);
+  const row=await c.env.DB.prepare('SELECT id,site_id,last_sequence FROM gateway_credentials WHERE token_hash=? AND revoked_at IS NULL').bind(tokenHash).first<{id:string;site_id:string;last_sequence:number}>();
+  if(!row)return fail(401,'gateway_unauthenticated','Gateway token is unknown or revoked.');
+  if(row.site_id!==siteId)return fail(403,'site_forbidden','This gateway token cannot access the requested site.');
+  return row;
+}
 
 const summary=(s:State['sites'][string])=>({id:s.id,name:s.name,latitude:s.latitude,longitude:s.longitude,timezone:s.timezone});
 function dashboard(state:State,id:string,u:User){
@@ -169,6 +181,33 @@ app.delete('/api/v1/sites/:id/crews/:crewId',async c=>{
 });
 app.post('/api/v1/emergencies/:id/ack',async c=>{
  const u=await user(c);await body(c,[]);const id=c.req.param('id');const event=await update(c.env.DB,s=>{const owner=Object.values(s.sites).find(site=>site.events.some(e=>e.id===id));if(!owner)return fail(404,'event_not_found','Help event not found.');if(!u.site_ids.includes(owner.id))return fail(403,'site_forbidden','This supervisor cannot access the requested site.');return validated(()=>acknowledge(s,id,u.name));});return c.json({ok:true,id:event.id,acknowledged:true,acknowledged_at:event.acknowledged_at,acknowledged_by:event.acknowledged_by,watch_state_cleared:false});
+});
+app.post('/api/v1/gateway/batches',async c=>{
+ const data=await body(c,['site_id','entries','last_sequence']);
+ const siteId=typeof data.site_id==='string'?data.site_id:'';if(!siteId)return fail(422,'validation','Provide the gateway site ID.');
+ const credential=await gateway(c,siteId);
+ if(!Array.isArray(data.entries))return fail(422,'validation','Provide a batch entries array.');
+ const clock=new Date();
+ const highest=await update(c.env.DB,state=>{
+  const last=Math.max(credential.last_sequence,typeof data.last_sequence==='number'&&Number.isInteger(data.last_sequence)?data.last_sequence:0);
+  const accepted=validated(()=>{validateBatch(state,siteId,data.entries as never,last,clock);return (data.entries as {sequence:number}[]).reduce((a,e)=>Math.max(a,e.sequence),last);});
+  validated(()=>applyBatch(state,siteId,data.entries as never));
+  return accepted;
+ });
+ await c.env.DB.prepare('UPDATE gateway_credentials SET last_sequence=? WHERE id=?').bind(highest,credential.id).run();
+ return c.json({ok:true,accepted_entries:(data.entries as unknown[]).length,sequence:highest});
+});
+app.post('/api/v1/gateway/help-events',async c=>{
+ const data=await body(c,['site_id','event_id','watch_id','occurred_at','kind']);
+ const siteId=typeof data.site_id==='string'?data.site_id:'';if(!siteId)return fail(422,'validation','Provide the gateway site ID.');
+ await gateway(c,siteId);
+ const clock=new Date();
+ const event=await update(c.env.DB,state=>{
+  const parsed=validated(()=>validateHelpEvent(state,siteId,data as never,clock));
+  return validated(()=>applyHelpEvent(state,siteId,data as never,parsed.assignment,parsed.occurred,clock));
+ });
+ const duplicate=event.received_at!==clock.toISOString();
+ return c.json({ok:true,event_id:event.id,duplicate,received_at:event.received_at},duplicate?200:201);
 });
 app.all('/api/*',()=>fail(404,'not_found','Endpoint not found.'));
 app.all('*',async c=>{const response=await c.env.ASSETS.fetch(c.req.raw);const headers=new Headers(response.headers);headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");headers.set('X-Content-Type-Options','nosniff');headers.set('Referrer-Policy','no-referrer');return new Response(response.body,{status:response.status,headers});});

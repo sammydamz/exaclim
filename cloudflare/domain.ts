@@ -220,3 +220,58 @@ export function acknowledge(state:State,eventId:string,actor='Demo Supervisor',a
   for(const site of Object.values(state.sites))for(const event of site.events)if(event.id===eventId){if(!event.acknowledged_at){event.acknowledged_at=iso(clock);event.acknowledged_by=actor;}return {...event};}
   throw new Error('Unknown help event');
 }
+export interface GatewayBatchEntry {watch_id:string;level:Level;sampled_at:string;sequence:number}
+export interface GatewayHelpEntry {event_id:string;watch_id:string;occurred_at:string;kind:'help'|'symptom'}
+/** Validate an aggregate batch for a site: known watches, ordered sequences, no future samples.
+ * Returns the highest accepted sequence; throws with a readable reason otherwise. */
+export function validateBatch(state:State,siteId:string,entries:GatewayBatchEntry[],lastSequence:number,clock:Date):number {
+  const site=siteFor(state,siteId);
+  if(!Array.isArray(entries)||entries.length>200) throw new Error('Batch must contain at most 200 entries');
+  const watches=new Map(site.assignments.map(a=>[a.watch_id.toLowerCase(),a])),known=new Set(watches.keys());
+  let highest=lastSequence;
+  const seenSequences=new Set<number>();
+  for(const entry of entries) {
+    if(typeof entry.watch_id!=='string'||typeof entry.sequence!=='number'||!Number.isInteger(entry.sequence)) throw new Error('Each batch entry needs a watch ID and integer sequence');
+    if(!known.has(entry.watch_id.toLowerCase())) throw new Error(`Unknown watch ID in batch`);
+    if(entry.sequence<=lastSequence) throw new Error('Batch sequence was already processed');
+    if(seenSequences.has(entry.sequence)) throw new Error('Duplicate sequence within batch');
+    seenSequences.add(entry.sequence);
+    if(!LEVELS.includes(entry.level)) throw new Error('Batch level must be green, amber or red');
+    const sampled=now(entry.sampled_at);
+    if(sampled.getTime()>clock.getTime()+120000) throw new Error('Sample timestamp is in the future');
+    if(sampled.getTime()<clock.getTime()-86400000) throw new Error('Sample timestamp is older than one day');
+    highest=Math.max(highest,entry.sequence);
+  }
+  return highest;
+}
+/** Validate an authorized help event: known watch, immutable ID, plausible occurrence time. */
+export function validateHelpEvent(state:State,siteId:string,entry:GatewayHelpEntry,clock:Date):{watch_id:string;assignment:Assignment;occurred:Date} {
+  const site=siteFor(state,siteId);
+  if(typeof entry.event_id!=='string'||!/^[A-Za-z0-9-]{8,64}$/.test(entry.event_id)) throw new Error('Help event needs an ID of 8-64 letters, digits or dashes');
+  if(entry.kind!=='help'&&entry.kind!=='symptom') throw new Error('Help kind must be help or symptom');
+  const assignment=site.assignments.find(a=>a.watch_id.toLowerCase()===entry.watch_id?.toLowerCase());
+  if(!assignment) throw new Error('Unknown watch ID for help event');
+  const occurred=now(entry.occurred_at);
+  if(occurred.getTime()>clock.getTime()+120000) throw new Error('Help occurrence time is in the future');
+  if(occurred.getTime()<clock.getTime()-86400000*2) throw new Error('Help occurrence time is older than two days');
+  return {watch_id:assignment.watch_id,assignment,occurred};
+}
+/** Apply a validated batch: per-watch samples measured at their stated time. */
+export function applyBatch(state:State,siteId:string,entries:GatewayBatchEntry[]):void {
+  const site=siteFor(state,siteId);
+  for(const entry of entries) {
+    const assignment=site.assignments.find(a=>a.watch_id.toLowerCase()===entry.watch_id.toLowerCase())!;
+    site.samples[assignment.watch_id]={level:entry.level,sampled_at:iso(now(entry.sampled_at)),received_at:iso(new Date())};
+  }
+  site.gateway_connected=true;
+}
+/** Apply a validated help event; duplicates (same immutable ID) are ignored. */
+export function applyHelpEvent(state:State,siteId:string,entry:GatewayHelpEntry,assignment:Assignment,occurred:Date,clock:Date):HelpEvent {
+  const site=siteFor(state,siteId);
+  const existing=site.events.find(e=>e.id===entry.event_id);
+  if(existing)return existing;
+  const delayed=clock.getTime()-occurred.getTime()>600000;
+  const event:HelpEvent={id:entry.event_id,worker_name:assignment.worker_name,watch_id:assignment.watch_id,crew_id:assignment.crew_id,assignment_id:assignment.id,assignment_version:assignment.version,occurred_at:iso(occurred),received_at:iso(clock),delayed,acknowledged_at:null,acknowledged_by:null,resolved_at:null};
+  site.events.push(event);
+  return event;
+}

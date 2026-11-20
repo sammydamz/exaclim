@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initialState,snapshot,addSite,addCrew,assignWatch,renameCrew,removeCrew,scenario,acknowledge,recordWeather } from '../cloudflare/domain.ts';
+import { initialState,snapshot,addSite,addCrew,assignWatch,renameCrew,removeCrew,scenario,acknowledge,recordWeather,validateBatch,applyBatch,validateHelpEvent,applyHelpEvent } from '../cloudflare/domain.ts';
 import type { State } from '../cloudflare/domain.ts';
 const NOW='2026-11-19T10:00:00Z';
 const later=(seconds:number)=>new Date(Date.parse(NOW)+seconds*1000);
@@ -103,6 +103,43 @@ test('new sites are isolated and crew rename/remove enforce assignment safety',(
  removeCrew(state,created.id,addCrew(state,created.id,'Empty',3).id);
  assert.equal(state.sites[created.id].crews.length,1);
  assert.equal(snapshot(state,created.id,NOW).groups.length,before);
+});
+test('gateway batch validation enforces sequences, watch IDs and time provenance',()=>{
+ const state=initialState(NOW),watch=state.sites.accra.assignments[0].watch_id;
+ const clock=new Date(NOW),entry=(over:{watch_id?:string;level?:'green'|'amber'|'red';sampled_at?:string;sequence?:number}={}):{watch_id:string;level:'green'|'amber'|'red';sampled_at:string;sequence:number}=>({watch_id:watch,level:'amber',sampled_at:NOW,sequence:1,...over});
+ assert.equal(validateBatch(state,'accra',[entry()],0,clock),1);
+ assert.equal(validateBatch(state,'accra',[entry({sequence:5})],0,clock),5);
+ assert.throws(()=>validateBatch(state,'accra',[entry({sequence:0})],0,clock));
+ assert.throws(()=>validateBatch(state,'accra',[entry()],5,clock),'replayed sequence');
+ assert.throws(()=>validateBatch(state,'accra',[entry({watch_id:'DEMO-001'}),entry({watch_id:'DEMO-001'})],0,clock),'duplicate sequence');
+ assert.throws(()=>validateBatch(state,'accra',[entry({watch_id:'NOPE-9'})],0,clock));
+ assert.throws(()=>validateBatch(state,'accra',[entry({level:'purple' as never})],0,clock));
+ assert.throws(()=>validateBatch(state,'accra',[entry({sampled_at:'2099-01-01T00:00:00Z'})],0,clock));
+ assert.throws(()=>validateBatch(state,'accra',[entry({sampled_at:'2025-11-19T10:00:00Z'})],0,clock));
+ assert.throws(()=>validateBatch(state,'tema',[entry()],0,clock));
+});
+test('gateway batches advance samples without inventing data and preserve red floor',()=>{
+ const state=initialState(NOW),watch=state.sites.accra.assignments[0].watch_id;
+ applyBatch(state,'accra',[{watch_id:watch,level:'red',sampled_at:NOW,sequence:2}]);
+ const sample=state.sites.accra.samples[watch];assert.equal(sample.level,'red');
+ assert.ok(snapshot(state,'accra',NOW).groups.some(g=>g.help_active||g.state==='red'||g.counts===null||g.counts.red>=1));
+ applyBatch(state,'accra',state.sites.accra.assignments.slice(0,3).map((a,i)=>({watch_id:a.watch_id,level:'green' as const,sampled_at:NOW,sequence:3})));
+ assert.equal(state.sites.accra.gateway_connected,true);
+});
+test('gateway help events are deduplicated, attributed and flagged delayed',()=>{
+ const state=initialState(NOW),assignment=state.sites.accra.assignments[0],clock=new Date(NOW);
+ const entry={event_id:'GW-EVENT-0001',watch_id:assignment.watch_id,occurred_at:NOW,kind:'help' as const};
+ const first=validateHelpEvent(state,'accra',entry,clock),event=applyHelpEvent(state,'accra',entry,first.assignment,first.occurred,clock);
+ assert.equal(event.worker_name,assignment.worker_name);assert.equal(event.assignment_version,assignment.version);assert.equal(event.delayed,false);
+ const again=applyHelpEvent(state,'accra',entry,first.assignment,first.occurred,new Date(Date.parse(NOW)+5000));
+ assert.equal(again.id,event.id);assert.equal(state.sites.accra.events.length,1,'immutable ID dedup');
+ const late={...entry,event_id:'GW-EVENT-0002',occurred_at:'2026-11-19T09:40:00Z'};
+ const parsed=validateHelpEvent(state,'accra',late,clock);
+ assert.equal(applyHelpEvent(state,'accra',late,parsed.assignment,parsed.occurred,clock).delayed,true);
+ assert.throws(()=>validateHelpEvent(state,'accra',{...entry,event_id:'bad id!'},clock));
+ assert.throws(()=>validateHelpEvent(state,'accra',{...entry,watch_id:'NOPE-1'},clock));
+ assert.throws(()=>validateHelpEvent(state,'accra',{...entry,event_id:'GW-EVENT-0003',occurred_at:'2099-01-01T00:00:00Z'},clock));
+ assert.throws(()=>validateHelpEvent(state,'accra',{...entry,kind:'panic' as never},clock));
 });
 test('JSON round-trip reproduces state and Tema starts empty',()=>{
  const state=initialState(NOW);assert.deepEqual(snapshot(JSON.parse(JSON.stringify(state)),'accra',NOW),snapshot(state,'accra',NOW));
