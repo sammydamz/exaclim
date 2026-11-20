@@ -1,0 +1,56 @@
+{
+  "checked_at_utc": "2026-11-16T09:12:07.783253+00:00",
+  "commands": [
+    {
+      "name": "software-tests",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "browser-checks",
+      "command": [
+        "npm",
+        "run",
+        "test:browser"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "javascript-syntax",
+      "command": [
+        "node",
+        "--check",
+        "web/app.js"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "source_sha256": {
+    "AGENTS.md": "a5218fa055e93e3218dddd171413c0638bbbbe31f1eb42b76a165fc5cf49e7d0",
+    "exaclim/__init__.py": "b53b3a477714dbebd3b3263a3b2cf352f01a6934f603ed96b313db74e232ada6",
+    "exaclim/engine.py": "d28459d385aed0e201b745da031e20f4bd7a253b75cea7e4862483c9cf789683",
+    "exaclim/forecast.py": "418a49d20994ae11b5d0fcea89d4a5105656c13be0efe3b01d947eb00876f579",
+    "exaclim/server.py": "a828f145ded1d7da2fed4c65f92269b15efc13949654f411e90e7c4be01434db",
+    "package-lock.json": "41fd06b46111ce8fae9dd254ab5ad096175f50c7f9baca13988540e280e251aa",
+    "package.json": "132b7653ab3a412983f22d786433d5a55cfd5cf34109f9024220ed73d451307d",
+    "scripts/check_browser.py": "8baab97351b9b072a4b00f92220a18c00bdf7bc171e7805517f4fd4e87763945",
+    "scripts/export_pdfs.py": "b3b1d2d1a92876c05bfc7a25f0930285f669d3cd88bd1714b73ad8ab12805796",
+    "tests/test_engine.py": "a5b6f028a1ae028137cd0e7a3ac1cdb604329eef132deb9af61cc141b69b870c",
+    "tests/test_forecast.py": "49033a6a657d11038e07455f7fad388ca933a0e45f3c33c64e99121c508fa10a",
+    "tests/test_server.py": "2a87e5d419286f9bcd2f8f5f9c84ad2d7b62df9073b5c224dc0100d0e1931ca3",
+    "vite.config.js": "ed3771ce021febd282dc1fe546f7db4468a38f6eec4911011fba935ca84e5ef0",
+    "web/app.js": "13b80c9943de383d50f994521416d747561f2dadeb0ad2260afe4766427840ca",
+    "web/components/ui.js": "18d880d613d45c95420ada4d9d65e8074483188c7d9a22955d01b1231c0e9a57",
+    "web/index.html": "6c74849d6bc919fc6b2d9aac37facde05558e0911c89ff7fc3f0e5aea0f7d1ea",
+    "web/styles.css": "c4704a4b966c03953e20b3c80e869f65e5adc741127ef63daa83023bea77243e",
+    ".npmrc": "d890d2453f07da9463432153ffe1de28e0cc42c4bc1f8ab362f710d983a7f4fa"
+  },
+  "installation": {
+    "command": "npm ci",
+    "exit_code": 0,
+    "note": "Verified with project-local writable npm cache configuration."
+  }
+}

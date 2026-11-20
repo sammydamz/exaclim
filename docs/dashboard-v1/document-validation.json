@@ -1,0 +1,34 @@
+{
+  "checked_date": "2026-11-19",
+  "source_traceability": "24 requirements mapped",
+  "task_count": 27,
+  "qa_count": 48,
+  "target_qa_status": "Not run",
+  "pdf_checks": [
+    {
+      "pdf": "Exaclim-Dashboard-Engineering-Tasks.pdf",
+      "pages": 10,
+      "text_bounds": "passed",
+      "date": "passed"
+    },
+    {
+      "pdf": "Exaclim-Dashboard-Full-Planning-Pack.pdf",
+      "pages": 33,
+      "text_bounds": "passed",
+      "date": "passed"
+    },
+    {
+      "pdf": "Exaclim-Dashboard-PRD.pdf",
+      "pages": 7,
+      "text_bounds": "passed",
+      "date": "passed"
+    },
+    {
+      "pdf": "Exaclim-Dashboard-Testing-and-Quality.pdf",
+      "pages": 15,
+      "text_bounds": "passed",
+      "date": "passed"
+    }
+  ],
+  "zip_integrity": "passed"
+}

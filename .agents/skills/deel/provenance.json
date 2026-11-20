@@ -1,0 +1,13 @@
+{
+  "listing": "https://mcpmarket.com/tools/skills/deel-ui-design-system-1",
+  "repository": "https://github.com/goharabbas321/zeoel-framework",
+  "commit": "cd671c85f04a2fdc067dd583feea0d6e71431789",
+  "source_directory": ".agents/skills/zeoel/skills/deel",
+  "upstream_git_blob_sha1": {
+    "SKILL.md": "bd43f8ac7a5102cd4c81a57c6a124d285872206d",
+    "metadata.json": "0d70f0ec0382ce1cdb264e56b773912f3d902691"
+  },
+  "installed_date": "2026-11-19",
+  "scope": "project-local Codex skill",
+  "note": "Community-authored design guidance; not an official Deel component library. Upstream SKILL.md declares MIT. Installed without executing repository scripts."
+}

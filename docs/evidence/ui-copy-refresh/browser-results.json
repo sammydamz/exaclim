@@ -1,0 +1,531 @@
+{
+  "started_at": "2026-11-20T06:54:54.925390+00:00",
+  "finished_at": "2026-11-20T06:55:15.383398+00:00",
+  "mode": "Synthetic software-only Chromium acceptance run",
+  "backend": "Python HTTP + SQLite",
+  "base_url": "http://127.0.0.1:35303",
+  "passed_check_count": 25,
+  "failure_count": 0,
+  "checks": [
+    {
+      "name": "Signed-out landing does not expose dashboard or identity",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA23",
+        "QA35"
+      ]
+    },
+    {
+      "name": "Wrong password gives visible error without authenticated view",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA23",
+        "QA36"
+      ]
+    },
+    {
+      "name": "Password login loads authenticated dashboard and closes SDK dialog",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA23",
+        "QA36"
+      ]
+    },
+    {
+      "name": "Core screen uses library cards, concise copy and the three specified areas",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA44"
+      ]
+    },
+    {
+      "name": "Synthetic source and site timezone are visible in another browser timezone",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA01",
+        "QA02",
+        "QA42"
+      ]
+    },
+    {
+      "name": "SDK day tabs work by keyboard and retain full hourly coverage",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA01",
+        "QA36"
+      ]
+    },
+    {
+      "name": "Hourly forecast detail is keyboard-accessible without hover",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA03",
+        "QA36"
+      ]
+    },
+    {
+      "name": "Routine crew cards show grouped aggregates without worker identities",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA09",
+        "QA25"
+      ]
+    },
+    {
+      "name": "Forecast windows are readable and suggestions are advice, not recorded adherence",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA03",
+        "QA14",
+        "QA15"
+      ]
+    },
+    {
+      "name": "Dashboard renders at 1440px and 1920px with captured evidence",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA37"
+      ]
+    },
+    {
+      "name": "SDK setup dialog Escape closes and restores trigger focus",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA36"
+      ]
+    },
+    {
+      "name": "Site setup save is confirmed and survives browser reload",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA26",
+        "QA36"
+      ]
+    },
+    {
+      "name": "New crew is persisted and shown with explicit saved feedback",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA26"
+      ]
+    },
+    {
+      "name": "Assignment flow explicitly excludes private watch-local profiles",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA24",
+        "QA25"
+      ]
+    },
+    {
+      "name": "Simulated watch assignment saves without exposing identity in routine crew cards",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA25",
+        "QA26"
+      ]
+    },
+    {
+      "name": "Injected gateway loss is cautious and never reassures green",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA07",
+        "QA12"
+      ]
+    },
+    {
+      "name": "Explicit reconnect restores fresh labeled synthetic data",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA08",
+        "QA30"
+      ]
+    },
+    {
+      "name": "Named synthetic help is shown above the core information areas",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA17"
+      ]
+    },
+    {
+      "name": "Offline ACK stays visible; confirmed ACK hides banner but retains group help floor",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA19",
+        "QA20"
+      ]
+    },
+    {
+      "name": "Delayed help is identified rather than presented as immediate delivery",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA18"
+      ]
+    },
+    {
+      "name": "All three areas fit tablet and 390/360px mobile layouts without page overflow",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA37"
+      ]
+    },
+    {
+      "name": "Interactive buttons remain SDK-owned and native select controls are absent",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA36"
+      ]
+    },
+    {
+      "name": "Browser storage contains no synthetic emergency names or password",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA35"
+      ]
+    },
+    {
+      "name": "Logout clears protected view and server session across reload",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA23",
+        "QA35"
+      ]
+    },
+    {
+      "name": "No unexpected JavaScript runtime, console or CSP errors",
+      "status": "Pass",
+      "qa_cases_partially_exercised": [
+        "QA36",
+        "QA42"
+      ]
+    }
+  ],
+  "failures": [],
+  "screenshots": [
+    "dashboard-1440.png",
+    "dashboard-1920.png",
+    "dashboard-data-loss.png",
+    "dashboard-help.png",
+    "dashboard-768.png",
+    "dashboard-390.png",
+    "dashboard-360.png"
+  ],
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "response_errors": [
+    {
+      "url": "http://127.0.0.1:35303/api/v1/auth/me",
+      "status": 401
+    },
+    {
+      "url": "http://127.0.0.1:35303/api/v1/auth/login",
+      "status": 401
+    },
+    {
+      "url": "http://127.0.0.1:35303/api/v1/auth/me",
+      "status": 401
+    }
+  ],
+  "qa_case_coverage": [
+    {
+      "id": "QA01",
+      "title": "Today/tomorrow forecast coverage",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA02",
+      "title": "Site timezone, midnight and daylight-saving boundaries",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA03",
+      "title": "Risk labels and contiguous high-risk windows",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA04",
+      "title": "Absent and partial forecast coverage",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA05",
+      "title": "Forecast refresh failure and stale cache",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA06",
+      "title": "Distinct contributor counts and completeness",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA07",
+      "title": "Most-at-risk crew floor with unknown members",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA08",
+      "title": "Measurement age versus receive time and future clocks",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA09",
+      "title": "Combine small crews 2+1",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA10",
+      "title": "Combine 2+4 without overlapping totals",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA11",
+      "title": "Insufficient total population",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA12",
+      "title": "Valid contributors drop below privacy minimum",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA13",
+      "title": "Membership change, filters and cache cannot defeat grouping",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA14",
+      "title": "Suggestions respond to forecast and group summary",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA15",
+      "title": "Advice is not automatic control adherence",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA16",
+      "title": "No crew budget, no invented time-to-limit",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA17",
+      "title": "Healthy-path named help priority and latency",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA18",
+      "title": "Multiple, delayed and bad-clock help events",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA19",
+      "title": "Confirmed acknowledgement is not watch resolution",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA20",
+      "title": "Acknowledgement timeout/offline/server failure",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA21",
+      "title": "Concurrent acknowledgement and event isolation",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA22",
+      "title": "Service restart preserves emergency truth",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA23",
+      "title": "Supervisor login, expired session and site authorization",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA24",
+      "title": "Forbidden personal data never crosses cloud boundary",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA25",
+      "title": "Administrative assignment does not expose individual risk",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA26",
+      "title": "Site/crew creation and durable save errors",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA27",
+      "title": "Unique assignment and delayed help after watch transfer",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA28",
+      "title": "Independent watch alerts without phone/Internet",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA29",
+      "title": "Out-of-range watch queue and reboot",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA30",
+      "title": "Phone Internet outage and durable upload",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA31",
+      "title": "Issuance profile remains local and device-confirmed",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA32",
+      "title": "Local wear-day progression and correction",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA33",
+      "title": "Gateway authentication, replay and ordering",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA34",
+      "title": "Weak connection and complete outage",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA35",
+      "title": "Cache, logout and site-switch isolation",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA36",
+      "title": "SDK keyboard, modal, error and saved feedback",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA37",
+      "title": "Responsive, zoom, touch and outdoor readability",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA38",
+      "title": "Untrained supervisor comprehension",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA39",
+      "title": "Emergency and cold-load performance distribution",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA40",
+      "title": "Candidate software capacity and physical limits",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA41",
+      "title": "Malformed aggregates and bounded inputs",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA42",
+      "title": "Source mode and clinical-claim integrity",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA43",
+      "title": "Queue capacity, backpressure and reset ordering",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA44",
+      "title": "Production surface excludes old/out-of-scope views",
+      "status": "Partial software coverage",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA45",
+      "title": "Language selection, fallback and reviewed emergency copy",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA46",
+      "title": "Provider time/provenance and timeout hygiene",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA47",
+      "title": "Retention/deletion with queued identity attribution",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    },
+    {
+      "id": "QA48",
+      "title": "Gateway/watch retirement and credential revocation",
+      "status": "Not run by this harness",
+      "note": "No complete QA-case, physical, clinical or pilot pass is inferred."
+    }
+  ],
+  "not_measured": [
+    "Physical BLE/watch autonomy, queue durability and battery behavior",
+    "Clinical validity, language review and worker usability",
+    "p95 20-run latency/cold-load targets and weak-link performance distribution",
+    "Production security, site isolation review and real-worker data readiness"
+  ]
+}

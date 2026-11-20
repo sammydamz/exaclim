@@ -147,3 +147,21 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Python development outputs
+__pycache__/
+*.py[cod]
+.venv/
+# Generated document exports
+deliverables/
+
+# Local synthetic supervisor database
+.local/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Cloudflare local build/state and credentials
+.cloudflare/
+.wrangler/
+.dev.vars*

@@ -1,0 +1,91 @@
+ Exaclim Dashboard Requirements
+ Supervisor dashboard for the Exaclim worker heat dosimeter. Version 1, draft for team review.
+
+
+ 1. Purpose
+ Exaclim warns workers early and personally about heat strain through a wristband (green, amber,
+ red, with vibration). The dashboard is for supervisors. It helps them plan the work day around the heat
+ and see how their crews are doing, without exposing any individual worker's health details.
+
+
+ 2. Users
+ • Supervisor: the only dashboard user in this version. Plans the day, watches crew status,
+     responds to help calls.
+
+
+ 3. What the dashboard shows
+ The dashboard has three areas: the forecast, crew status, and suggested breaks. Nothing else.
+
+ 3.1 Heat forecast
+ • D1. Show the heat risk for the site for today and tomorrow, hour by hour, using the public weather
+     forecast for the site's location.
+ • D2. Risk uses the same colors as the wristband: green, amber, red.
+ • D3. Highlight high-risk windows clearly, for example "Tomorrow 11:00 to 15:00: high risk", so the
+     supervisor can plan before the day starts.
+
+ 3.2 Crew status
+ • D4. For each crew, show how many workers are currently green, amber and red.
+ • D5. Show the crew's overall status as one color, taken from its most at-risk members.
+ • D6. Show when the information was last updated.
+ 3.3 Suggested breaks and rotation
+ • D7. For each crew, suggest when to take rest breaks or rotate workers into shade, based on the
+     forecast and the crew's combined heat budget.
+ • D8. Suggestions are advice. The supervisor decides.
+ 3.4 Help calls and emergencies
+ • D9. When a worker presses the help button on the wristband or reports feeling unwell, show an
+     emergency alert at the top of the dashboard immediately, with the name of the worker, the crew
+     and the time.
+ • D10. An emergency alert stays visible until a supervisor acknowledges it.
+ 3.5 Watches and setup
+ • D11. Each crew has one shared site phone, kept by the supervisor or crew lead. It collects data
+     from the watches by Bluetooth and sends it to the dashboard over the internet.
+ • D12. The watch keeps working with no phone or signal. It calculates the heat budget and alerts
+     the worker by itself, and the data reaches the dashboard when the connection returns.
+ • D13. A help call made while the watch is out of range reaches the supervisor only once the watch
+     reconnects. The watch still alerts the worker and people nearby.
+
+
+Exaclim Dashboard Requirements                                                                     Page 1
+ • D14. The supervisor creates crews, sets the site location and assigns watches to workers.
+ • D15. Each worker's clothing type and heat acclimatization are set when the watch is issued, from
+     a few simple options. Acclimatization increases automatically with the days the watch is worn, and
+     can be changed. These details stay on the watch and are not shown on the dashboard.
+
+
+ 4. Privacy rules
+ • P1. The dashboard shows crew-level information only. No individual worker's heat budget, history
+     or health details appear on it. The only exception is a help call, which names the worker (D9).
+ • P2. Crews of fewer than 3 workers are not shown on their own. They are grouped with another
+     crew, so no individual stands out.
+ • P3. Worker data is not used for discipline or unrelated employment decisions.
+
+ 5. Safety rules the dashboard follows
+ • S1. A symptom report or help call always overrides everything else, including the forecast and
+     crew status.
+ • S2. Suggestions can make a warning earlier or more cautious, never weaker.
+ • S3. If the forecast or crew data is missing or old, the dashboard says so and shows a cautious
+     status. It never goes quiet or shows "all clear" by default.
+
+
+ 6. Usability
+ • U1. A web app that supervisors log into from a phone or computer browser. One screen, readable
+     outdoors, with large text and colors that are also distinguishable by label (not color alone).
+ • U2. Works on a weak connection and shows clearly when it is out of date.
+ • U3. A new supervisor can understand it without training.
+
+ 7. Open questions
+ These need an answer from the team before the design is finished.
+ 1. Which watch model? It must send data over Bluetooth to a phone or web app and have a button
+     for the help call.
+ 2. Which languages should the dashboard support first?
+
+ 8. Not in this version
+ On-site sensors, individual worker views, reports and analytics, user accounts for roles other than
+ supervisor, and any other alert channels such as SMS. They can be added later if the pilot shows
+ they are needed.
+
+
+
+
+Exaclim Dashboard Requirements                                                                         Page 2
+

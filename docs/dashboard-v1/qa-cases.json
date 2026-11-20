@@ -1,0 +1,833 @@
+[
+  {
+    "id": "QA01",
+    "title": "Today/tomorrow forecast coverage",
+    "requirements": [
+      "D1",
+      "D3"
+    ],
+    "release_gate": "Demo",
+    "method": "API + browser",
+    "severity": "Major",
+    "preconditions": "Fixed clock, saved site location/timezone and a deterministic hourly provider response.",
+    "steps": "Open Today and Tomorrow; inspect every valid local hour and the day switch.",
+    "expected": "Both local calendar days are represented; every hour is labeled with time, risk and quality. No fabricated values replace absent hours.",
+    "evidence": "Provider fixture, API body, visible hourly/window assertions.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA02",
+    "title": "Site timezone, midnight and daylight-saving boundaries",
+    "requirements": [
+      "D1",
+      "D3"
+    ],
+    "release_gate": "Demo",
+    "method": "Unit + API + browser",
+    "severity": "Major",
+    "preconditions": "Accra fixture and a DST-observing test site; clock under test control.",
+    "steps": "Use a browser in a different timezone; cross midnight and spring/fall clock changes.",
+    "expected": "Labels follow site calendar days; 23/25-hour days and repeated offsets are unambiguous. No assumption that every two-day interval has exactly 48 buckets.",
+    "evidence": "Timestamp/offset golden cases and screen assertions.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA03",
+    "title": "Risk labels and contiguous high-risk windows",
+    "requirements": [
+      "D2",
+      "D3",
+      "S2"
+    ],
+    "release_gate": "Demo",
+    "method": "Unit + browser",
+    "severity": "Critical",
+    "preconditions": "Versioned illustrative classification fixture with explicit band boundaries.",
+    "steps": "Exercise each band boundary; combine adjacent red hours; insert a missing hour and a date boundary.",
+    "expected": "Green/Amber/Red have words/symbols. Red windows use half-open intervals and split at unknown hours/day boundaries; policy version remains explicit.",
+    "evidence": "Boundary tests, interval outputs and accessible-name assertions.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA04",
+    "title": "Absent and partial forecast coverage",
+    "requirements": [
+      "D1",
+      "D3",
+      "S3"
+    ],
+    "release_gate": "Demo",
+    "method": "API + browser fault injection",
+    "severity": "Critical",
+    "preconditions": "Provider response has null/missing/invalid hours.",
+    "steps": "Remove one high-risk hour, then remove the entire response.",
+    "expected": "Missing slots are Unknown/Caution, never zero/green. Partial red windows do not bridge unknown data.",
+    "evidence": "Fault fixture, quality-state assertions and error screenshot.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA05",
+    "title": "Forecast refresh failure and stale cache",
+    "requirements": [
+      "D1",
+      "S3",
+      "U2"
+    ],
+    "release_gate": "Demo",
+    "method": "Clock-controlled API/browser",
+    "severity": "Critical",
+    "preconditions": "Cached forecast with trusted fetch/issue metadata; proposed 6-hour freshness timeout.",
+    "steps": "Fail subsequent fetches; advance to timeout and beyond; load an expired cached response.",
+    "expected": "Fetch failure is visible; cached source/time is retained without false freshness; expired coverage is cautious. Operational mode does not silently load a synthetic forecast.",
+    "evidence": "Controlled-clock outputs and request/provenance log.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA06",
+    "title": "Distinct contributor counts and completeness",
+    "requirements": [
+      "D4",
+      "D6",
+      "D11"
+    ],
+    "release_gate": "Demo",
+    "method": "Unit + ingestion API",
+    "severity": "Critical",
+    "preconditions": "Crew has six active assigned watches with known states.",
+    "steps": "Send duplicated packets, then a watch transfer, stale contributions and valid updates.",
+    "expected": "Counts reflect distinct active assignments; G+A+R+Unknown equals expected count; duplicates cannot inflate contributors.",
+    "evidence": "Ingestion fixture and aggregate invariant checks.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA07",
+    "title": "Most-at-risk crew floor with unknown members",
+    "requirements": [
+      "D5",
+      "S1",
+      "S2",
+      "S3"
+    ],
+    "release_gate": "Demo",
+    "method": "Unit + browser",
+    "severity": "Critical",
+    "preconditions": "Mixed green, amber, red and unknown contributions.",
+    "steps": "Add one red member to an otherwise green group; lose data; send only one fresh green contribution.",
+    "expected": "Overall routine severity is at least the highest known state; missing data imposes caution and preserves known red. One green sample cannot make the group all-clear.",
+    "evidence": "Severity lattice/property checks and browser states.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA08",
+    "title": "Measurement age versus receive time and future clocks",
+    "requirements": [
+      "D6",
+      "S3",
+      "U2"
+    ],
+    "release_gate": "Demo",
+    "method": "Clock-controlled unit/API/browser",
+    "severity": "Critical",
+    "preconditions": "Samples include sample time, receive time, age, sequence and clock quality.",
+    "steps": "Replay an old sample with a new receipt; jump client clock; send a future timestamp; cross 120-second freshness boundary.",
+    "expected": "Packet receipt does not refresh the measurement. Implausible time is rejected/flagged, and local UI expiry occurs without a server message.",
+    "evidence": "Sample-age traces and monotonic-clock assertions.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA09",
+    "title": "Combine small crews 2+1",
+    "requirements": [
+      "D4",
+      "D5",
+      "D7",
+      "P1",
+      "P2"
+    ],
+    "release_gate": "Demo",
+    "method": "Unit + API + browser",
+    "severity": "Critical",
+    "preconditions": "Same-site crews A=2 and B=1, all valid and fresh.",
+    "steps": "Generate privacy groups and load the dashboard/API.",
+    "expected": "One stable three-person combined group appears; neither constituent has a separate risk or budget breakdown.",
+    "evidence": "Group partition, JSON allowlist and rendered-card assertions.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA10",
+    "title": "Combine 2+4 without overlapping totals",
+    "requirements": [
+      "D4",
+      "D7",
+      "P2"
+    ],
+    "release_gate": "Demo",
+    "method": "Unit + API",
+    "severity": "Critical",
+    "preconditions": "Same-site crews A=2 and B=4.",
+    "steps": "Combine whole crews; request any supported group/filter view.",
+    "expected": "One six-person group; B is not also independently exposed. API cannot recover A by subtraction through an alternate route/filter.",
+    "evidence": "Grouping invariant and negative endpoint tests.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA11",
+    "title": "Insufficient total population",
+    "requirements": [
+      "D4",
+      "P2",
+      "S3"
+    ],
+    "release_gate": "Demo",
+    "method": "API + browser",
+    "severity": "Critical",
+    "preconditions": "Only two eligible participants in a site.",
+    "steps": "Load dashboard and request group, suggestion and stream data.",
+    "expected": "No numeric risk counts or combined budget are exposed; a clear insufficient-contributors state and general cautious advice appear. No cross-site borrowing.",
+    "evidence": "All response channels and empty-state capture.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA12",
+    "title": "Valid contributors drop below privacy minimum",
+    "requirements": [
+      "D4",
+      "D6",
+      "D7",
+      "P1",
+      "P2",
+      "S3"
+    ],
+    "release_gate": "Demo",
+    "method": "Clock-controlled API/browser",
+    "severity": "Critical",
+    "preconditions": "Previously valid group of three, then one/two stale or absent contributors.",
+    "steps": "Expire contributing data and replay a cached older full breakdown.",
+    "expected": "Current numeric breakdown/budget is suppressed; stale cached data is not represented as current or reused for unsafe inference. Caution remains visible.",
+    "evidence": "Transition trace, cache expiry and API assertions.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA13",
+    "title": "Membership change, filters and cache cannot defeat grouping",
+    "requirements": [
+      "P1",
+      "P2",
+      "P3",
+      "U2"
+    ],
+    "release_gate": "Demo",
+    "method": "Privacy integration + security review",
+    "severity": "Critical",
+    "preconditions": "Two sites and several crews, with a privacy-group version change.",
+    "steps": "Change assignment/filters, switch sites, replay prior group/cache versions and request old identifiers.",
+    "expected": "No overlapping active partitions or cross-site access; invalid prior data is removed. Setup identities cannot be joined to individual routine health.",
+    "evidence": "Negative API matrix and cache inspection.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA14",
+    "title": "Suggestions respond to forecast and group summary",
+    "requirements": [
+      "D7",
+      "S2"
+    ],
+    "release_gate": "Demo",
+    "method": "Unit/property + browser",
+    "severity": "Critical",
+    "preconditions": "Same crew under rising/falling weather and high/low group summaries.",
+    "steps": "Vary forecast and group exposure independently; feed a low mean containing a high-severity member.",
+    "expected": "Both inputs influence explainable advice. The most severe member/caution floor is not masked by an average or weaker forecast.",
+    "evidence": "Decision fixtures, policy version and severity property checks.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA15",
+    "title": "Advice is not automatic control adherence",
+    "requirements": [
+      "D8",
+      "P3",
+      "U3"
+    ],
+    "release_gate": "Demo",
+    "method": "Browser + content review",
+    "severity": "Major",
+    "preconditions": "Suggestion displayed with an actionable explanation.",
+    "steps": "View/dismiss suggestion; acknowledge a help event; inspect persisted operational events.",
+    "expected": "Advice remains labeled as advice; neither viewing nor acknowledgement records that a worker rested or completed a control.",
+    "evidence": "UI copy and event-state assertions.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA16",
+    "title": "No crew budget, no invented time-to-limit",
+    "requirements": [
+      "D7",
+      "D8",
+      "S2",
+      "S3"
+    ],
+    "release_gate": "Demo",
+    "method": "Unit + browser",
+    "severity": "Critical",
+    "preconditions": "Group summary is unavailable, below privacy minimum or malformed.",
+    "steps": "Request suggestions despite valid forecast.",
+    "expected": "Manual/site-plan advice and missing-data reason appear; no fake dose value, clinical time-to-limit or unapproved precise rest prescription.",
+    "evidence": "Suggestion fallback fixtures and schema checks.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA17",
+    "title": "Healthy-path named help priority and latency",
+    "requirements": [
+      "D9",
+      "P1",
+      "S1",
+      "U1"
+    ],
+    "release_gate": "Demo",
+    "method": "API + browser + timing harness",
+    "severity": "Critical",
+    "preconditions": "Authorized supervisor, mapped synthetic worker, healthy network and clock instrumentation.",
+    "steps": "Ingest help while forecast/crew is green and while another UI request is pending.",
+    "expected": "Banner takes priority with worker, crew and occurrence time; p95 backend-durable-receipt-to-visible target ≤2s over ≥20 runs. No private dose/profile appears.",
+    "evidence": "Per-hop timestamps, browser captures and percentile calculation.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA18",
+    "title": "Multiple, delayed and bad-clock help events",
+    "requirements": [
+      "D9",
+      "D13",
+      "S1"
+    ],
+    "release_gate": "Demo",
+    "method": "Integration + browser",
+    "severity": "Critical",
+    "preconditions": "Several events with different occurrence/arrival times and one untrusted clock.",
+    "steps": "Deliver new, older queued and unknown-assignment events in mixed order.",
+    "expected": "Every unacknowledged event remains reachable. Delayed/clock-unverified labels show; no invented name/time, no overwritten event.",
+    "evidence": "Event stream/order assertions and multi-event screenshots.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA19",
+    "title": "Confirmed acknowledgement is not watch resolution",
+    "requirements": [
+      "D10",
+      "S1"
+    ],
+    "release_gate": "Demo",
+    "method": "API + browser + firmware contract",
+    "severity": "Critical",
+    "preconditions": "One visible help event and independently latched watch/simulator state.",
+    "steps": "Acknowledge as an authorized supervisor and inspect server receipt and watch state.",
+    "expected": "Only after durable success does that banner leave the unacknowledged queue. Server actor/time is recorded; watch latch and safety state remain unchanged. The crew/group remains at least Red with a non-identifying active-help marker until trusted local resolution, even after banner acknowledgement.",
+    "evidence": "Canonical receipt, banner transition and no-clear-command assertion.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA20",
+    "title": "Acknowledgement timeout/offline/server failure",
+    "requirements": [
+      "D10",
+      "S3",
+      "U2"
+    ],
+    "release_gate": "Demo",
+    "method": "API/browser fault injection",
+    "severity": "Critical",
+    "preconditions": "Unacknowledged event; requests can time out or return 5xx.",
+    "steps": "Click acknowledge during outage and retry after reconnect.",
+    "expected": "Banner remains visible with unconfirmed/pending status until canonical receipt. Retry is safe; no optimistic disappearance or success toast on failure.",
+    "evidence": "Pending/failure/retry screenshots and request log.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA21",
+    "title": "Concurrent acknowledgement and event isolation",
+    "requirements": [
+      "D9",
+      "D10"
+    ],
+    "release_gate": "Demo",
+    "method": "Concurrent API integration",
+    "severity": "Critical",
+    "preconditions": "Two supervisors authorized for one event and a second unacknowledged event.",
+    "steps": "Race acknowledgement calls and replay their idempotency keys.",
+    "expected": "One canonical first-ack actor/time; later responses agree; no duplicate effects and second event remains unacknowledged.",
+    "evidence": "Transaction/concurrency assertions and receipt records.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA22",
+    "title": "Service restart preserves emergency truth",
+    "requirements": [
+      "D9",
+      "D10",
+      "D13",
+      "S1"
+    ],
+    "release_gate": "Demo",
+    "method": "Durability integration",
+    "severity": "Critical",
+    "preconditions": "Persistent store contains one received/unacknowledged and one acknowledged event.",
+    "steps": "Restart backend between ingestion and UI display, then after acknowledgement; replay events.",
+    "expected": "Unacknowledged event reappears; acknowledged event stays acknowledged; no record loss, fake new occurrence time or duplicate alerts.",
+    "evidence": "Restart/replay trace tied to database snapshot/build.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA23",
+    "title": "Supervisor login, expired session and site authorization",
+    "requirements": [
+      "U1",
+      "P1",
+      "P3"
+    ],
+    "release_gate": "Protected-data demo / Pilot",
+    "method": "Security/API/browser",
+    "severity": "Critical",
+    "preconditions": "Two supervisors, separate sites, expired and missing credentials.",
+    "steps": "Request snapshot, stream, setup, assignments, emergency and ack through forged IDs/cookies; attempt cross-origin mutations.",
+    "expected": "401/403 and CSRF protections apply; no cross-site identifiers, health data or cached named details leak; gateway credentials cannot act as supervisors.",
+    "evidence": "Endpoint authorization matrix and sanitized responses.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA24",
+    "title": "Forbidden personal data never crosses cloud boundary",
+    "requirements": [
+      "P1",
+      "P3",
+      "D15"
+    ],
+    "release_gate": "Demo schemas / Pilot real data",
+    "method": "Schema tests + data-flow inspection",
+    "severity": "Critical",
+    "preconditions": "Payload capture, server/storage/log access and synthetic canary values.",
+    "steps": "Try sending individual score/history, clothing, acclimatization, body values and free-text symptoms; inspect every response/storage/log.",
+    "expected": "Schemas reject forbidden routine fields; canaries absent from cloud/analytics/logs/dashboard; only minimal authorized emergency identity is exposed.",
+    "evidence": "Schema-negative tests, canary scans and data-flow review.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA25",
+    "title": "Administrative assignment does not expose individual risk",
+    "requirements": [
+      "D14",
+      "P1",
+      "P3"
+    ],
+    "release_gate": "Demo",
+    "method": "API + browser privacy review",
+    "severity": "Critical",
+    "preconditions": "Supervisor opens setup and assignments for an enrolled worker.",
+    "steps": "Inspect setup, identifiers, API joins, hidden UI and development routes.",
+    "expected": "Administrative name/watch/crew mapping supports issuance but exposes no personal heat budget/history or risk drilldown.",
+    "evidence": "Response allowlist and production-route scan.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA26",
+    "title": "Site/crew creation and durable save errors",
+    "requirements": [
+      "D1",
+      "D14",
+      "U3"
+    ],
+    "release_gate": "Demo",
+    "method": "API + browser",
+    "severity": "Major",
+    "preconditions": "No site/crews; validation, conflict and save failures injectable.",
+    "steps": "Create valid site/crew; try invalid coordinates/timezone/blank names; fail and retry save.",
+    "expected": "Clear setup state, validated fields, durable successful values and local errors. Unsaved edits survive failure and success is not shown before confirmation.",
+    "evidence": "Form and reload assertions; validation fixtures.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA27",
+    "title": "Unique assignment and delayed help after watch transfer",
+    "requirements": [
+      "D9",
+      "D14",
+      "P1"
+    ],
+    "release_gate": "Demo / Bench",
+    "method": "Transactional integration",
+    "severity": "Critical",
+    "preconditions": "Watch was assigned to worker A, has queued help, then is assigned to B.",
+    "steps": "Attempt duplicate active assignment; transfer and deliver A’s old event.",
+    "expected": "Duplicate active assignment is rejected; event maps to A’s occurrence assignment without exposing B’s private context. Pending event provenance is retained.",
+    "evidence": "Assignment version/transaction/replay cases.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA28",
+    "title": "Independent watch alerts without phone/Internet",
+    "requirements": [
+      "D2",
+      "D11",
+      "D12",
+      "D13",
+      "S1",
+      "S3"
+    ],
+    "release_gate": "Bench / Pilot",
+    "method": "Physical hardware test",
+    "severity": "Critical",
+    "preconditions": "Qualified watch firmware and documented risk/demo input rig.",
+    "steps": "Power off phone, disable network and background dashboard; induce graded condition, stale source and help button.",
+    "expected": "Watch computes and displays graded alerts/vibration independently; local help alerts work. Dashboard never claims remote receipt while disconnected.",
+    "evidence": "Actual device video/logs, firmware/board IDs and power/alert observations.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA29",
+    "title": "Out-of-range watch queue and reboot",
+    "requirements": [
+      "D12",
+      "D13",
+      "S1"
+    ],
+    "release_gate": "Bench / Pilot",
+    "method": "Physical radio/durability fault injection",
+    "severity": "Critical",
+    "preconditions": "Watch beyond phone range, persistent event queue and firmware IDs.",
+    "steps": "Press help repeatedly as separate events, reboot watch before reconnection, then reconnect.",
+    "expected": "Local alert persists; distinct events survive reboot; replay deduplicates on delivery; watch deletes an event only after durable next-hop receipt.",
+    "evidence": "RF/power-cycle trace, queue contents and receipt IDs.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA30",
+    "title": "Phone Internet outage and durable upload",
+    "requirements": [
+      "D11",
+      "D13",
+      "D6"
+    ],
+    "release_gate": "Demo simulation / Bench physical",
+    "method": "Gateway integration + physical test",
+    "severity": "Critical",
+    "preconditions": "Phone receives BLE event while Internet is disabled; native gateway storage enabled.",
+    "steps": "Kill/restart gateway/phone, restore Internet, replay upload responses.",
+    "expected": "Queued events/aggregates retain sample/occurrence age; no duplicate events or false freshness; next-hop durable receipt controls deletion.",
+    "evidence": "Gateway logs, storage inspection and backend event records.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA31",
+    "title": "Issuance profile remains local and device-confirmed",
+    "requirements": [
+      "D14",
+      "D15",
+      "P1"
+    ],
+    "release_gate": "Bench / Pilot",
+    "method": "BLE provisioning + privacy inspection",
+    "severity": "Critical",
+    "preconditions": "Issuance uses synthetic clothing/acclimatization canaries; device can accept/reject config.",
+    "steps": "Set profile, inject BLE failure, retry; inspect HTTP, browser storage, agent snapshot, logs and cloud.",
+    "expected": "Only watch/local provisioning channel receives settings; no cloud copies or production agent access; no success before device confirmation.",
+    "evidence": "Canary leak scan and device confirmation transcript.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA32",
+    "title": "Local wear-day progression and correction",
+    "requirements": [
+      "D15",
+      "P1"
+    ],
+    "release_gate": "Bench / Pilot",
+    "method": "Clock-controlled firmware + expert review",
+    "severity": "Critical",
+    "preconditions": "Reviewed progression policy, or clearly synthetic schedule under demo label.",
+    "steps": "Replay same day, reboot, cross timezone/clock changes, simulate absence, manually change status and reassign watch.",
+    "expected": "No duplicate wear day; approved absence/decay and manual rules apply; prior wearer context clears correctly; nothing appears in dashboard/cloud.",
+    "evidence": "Policy approval/version and firmware golden cases.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA33",
+    "title": "Gateway authentication, replay and ordering",
+    "requirements": [
+      "D4",
+      "D6",
+      "D11",
+      "D13",
+      "P1",
+      "S3"
+    ],
+    "release_gate": "Demo schemas / Bench transport",
+    "method": "Security + ingestion integration",
+    "severity": "Critical",
+    "preconditions": "Signed/scoped device and gateway credentials; sequences and assignment versions.",
+    "steps": "Send forged packets, revoked credentials, duplicate IDs, out-of-order/future sequence/time and wrong-site batch.",
+    "expected": "Forged/out-of-scope data rejected; valid replay idempotent; older data cannot overwrite fresher state or clear emergencies.",
+    "evidence": "Protocol-negative tests and sanitized audit events.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA34",
+    "title": "Weak connection and complete outage",
+    "requirements": [
+      "S3",
+      "U2"
+    ],
+    "release_gate": "Demo",
+    "method": "Browser network throttling + clock control",
+    "severity": "Critical",
+    "preconditions": "Proposed profile: 400 kbps down, 100 kbps up, 400ms RTT, 60s outage plus extended expiry.",
+    "steps": "Load, interrupt and reconnect; advance beyond crew/forecast timeout without server push.",
+    "expected": "Age/connection/missing-source states stay clear; no fake all-clear or refreshed timestamp; reconnect obtains canonical data and pending ack truth.",
+    "evidence": "Network profile, timed state captures and request timeline.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA35",
+    "title": "Cache, logout and site-switch isolation",
+    "requirements": [
+      "P1",
+      "P2",
+      "U1",
+      "U2"
+    ],
+    "release_gate": "Protected-data demo / Pilot",
+    "method": "Browser storage/security inspection",
+    "severity": "Critical",
+    "preconditions": "Authorized site A loaded, named help present, second site available.",
+    "steps": "Go offline, inspect storage/service-worker cache, logout, switch site and return/back/reload.",
+    "expected": "Only allowed scoped aggregate cache persists; no named emergency/profile at rest in browser; logout/site change clears prior visible state; offline login denied.",
+    "evidence": "Storage/cache dump with synthetic canaries and navigation assertions.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA36",
+    "title": "SDK keyboard, modal, error and saved feedback",
+    "requirements": [
+      "U1",
+      "U3",
+      "UX1"
+    ],
+    "release_gate": "Demo",
+    "method": "Real browser + assistive-technology review",
+    "severity": "Major",
+    "preconditions": "All controls wired through SDK parts; keyboard and screen reader available.",
+    "steps": "Navigate entire screen; open/close setup; Cancel/Escape/confirm; trigger inline errors; use SDK agent where allowed.",
+    "expected": "Controls named and reachable, focus returns predictably, emergencies announced without trapping focus, pending/disabled states correct, saved feedback follows actual success.",
+    "evidence": "Keyboard/agent tests and screen-reader observations.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA37",
+    "title": "Responsive, zoom, touch and outdoor readability",
+    "requirements": [
+      "U1",
+      "UX1"
+    ],
+    "release_gate": "Demo layout / Pilot outdoor",
+    "method": "Real browsers/devices + visual review",
+    "severity": "Major",
+    "preconditions": "360/390/768/1440/1920px, 200% zoom, touch phone and physical daylight access.",
+    "steps": "Read forecast/crew/advice and emergency; zoom, rotate and use touch; compare risk labels in grayscale.",
+    "expected": "No hidden critical content/horizontal workflow overflow; ≥44px primary targets; contrast targets met; labels/symbols distinguish severity. Outdoor pass requires real observation.",
+    "evidence": "Viewport screenshots, contrast measurements and outdoor observation record.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA38",
+    "title": "Untrained supervisor comprehension",
+    "requirements": [
+      "U3",
+      "D8"
+    ],
+    "release_gate": "Pilot / optional demo usability evidence",
+    "method": "Moderated formative usability",
+    "severity": "Major",
+    "preconditions": "Proposed minimum five representative supervisors who have not used Exaclim; synthetic tasks.",
+    "steps": "Ask each to find tomorrow’s red window, identify cautious crew, interpret stale state and acknowledge a help alert without coaching.",
+    "expected": "Proposed success target: ≥4/5 finish each task correctly within two minutes and distinguish receipt from incident resolution. Report failures rather than call the UI intuitive by inspection.",
+    "evidence": "Consent-appropriate anonymized task notes and actual completion/time counts.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA39",
+    "title": "Emergency and cold-load performance distribution",
+    "requirements": [
+      "D9",
+      "U1",
+      "U2"
+    ],
+    "release_gate": "Demo measured / Pilot repeat",
+    "method": "Instrumented performance",
+    "severity": "Major",
+    "preconditions": "Defined healthy and weak-link profiles, fixed build, ≥20 runs each.",
+    "steps": "Measure backend-durable-help-receipt to visible banner and authenticated cold dashboard render.",
+    "expected": "Report sample count and p50/p95; proposed targets ≤2s healthy help p95 and ≤5s weak-link cold render p95. Offline radio delay excluded and reported separately.",
+    "evidence": "Raw timing samples, environment/network profile and percentile method.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA40",
+    "title": "Candidate software capacity and physical limits",
+    "requirements": [
+      "D4",
+      "D11",
+      "U2"
+    ],
+    "release_gate": "Demo software / Bench physical",
+    "method": "Load + radio qualification",
+    "severity": "Major",
+    "preconditions": "10 crews ×20 synthetic watches; separate real qualified device set.",
+    "steps": "Send concurrent batches/help events; exercise reconnection, background service and queue pressure.",
+    "expected": "No lost incidents or grouping leaks at declared tested software load. Real BLE watch-count limit is published from physical tests, never inferred from HTTP load.",
+    "evidence": "Load outputs and separate phone/OS/watch radio report.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA41",
+    "title": "Malformed aggregates and bounded inputs",
+    "requirements": [
+      "D4",
+      "D6",
+      "S3"
+    ],
+    "release_gate": "Demo",
+    "method": "Unit/fuzz/schema/API",
+    "severity": "Critical",
+    "preconditions": "Bounded ingress schema and invalid-value corpus.",
+    "steps": "Send negative/fractional/overflow counts, mismatched totals, huge JSON integers, NaN, null, large bodies and invalid timezone/sequence.",
+    "expected": "Reject safely with structured errors; no process crash or false fresh/green state; private payload not echoed.",
+    "evidence": "Corpus results and error-code/response checks.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA42",
+    "title": "Source mode and clinical-claim integrity",
+    "requirements": [
+      "D1",
+      "D7",
+      "D12",
+      "D15",
+      "S2"
+    ],
+    "release_gate": "Demo / Pilot review",
+    "method": "Content + source/configuration review",
+    "severity": "Critical",
+    "preconditions": "Demo and operational modes, failed live forecast and illustrative policy.",
+    "steps": "Inspect visible labels, README, build config, API provenance and submission claims.",
+    "expected": "Simulation is explicit; no automatic synthetic operational fallback, invented clinical limits, trained-AI claim or physical Bluetooth/battery claim from mocks.",
+    "evidence": "Mode screenshots, policy metadata and reviewed limitations list.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA43",
+    "title": "Queue capacity, backpressure and reset ordering",
+    "requirements": [
+      "D12",
+      "D13",
+      "S1",
+      "S3"
+    ],
+    "release_gate": "Bench / Pilot",
+    "method": "Physical fault injection + durable queue tests",
+    "severity": "Critical",
+    "preconditions": "Qualified storage budgets and emergency reserve policy recorded first.",
+    "steps": "Fill normal queues, generate emergency, power-cycle during write/receipt and reset/reassign with pending event.",
+    "expected": "No silent emergency eviction; queue-full/unconfirmed-delivery visible; local help remains active. Durable receipts and reset ordering preserve pending event provenance.",
+    "evidence": "Queue limits, power-failure logs and validated recovery traces.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA44",
+    "title": "Production surface excludes old/out-of-scope views",
+    "requirements": [
+      "P1",
+      "P3",
+      "U1"
+    ],
+    "release_gate": "Demo / Pilot",
+    "method": "Route/build inspection + browser",
+    "severity": "Critical",
+    "preconditions": "Production supervisor build plus separately restricted developer harness.",
+    "steps": "Enumerate routes/menus/API and attempt old worker/system/testing paths; scan frontend for raw histories.",
+    "expected": "Three core areas only; no individual health or reports/analytics/station/SMS module. Harness is not reachable in protected production; brand is Exaclim.",
+    "evidence": "Build route inventory and negative access assertions.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA45",
+    "title": "Language selection, fallback and reviewed emergency copy",
+    "requirements": [
+      "U1",
+      "U3",
+      "D9"
+    ],
+    "release_gate": "Demo declared / Pilot reviewed",
+    "method": "Localization/browser + fluent review",
+    "severity": "Major",
+    "preconditions": "English baseline; additional languages only if actually supplied/reviewed.",
+    "steps": "Switch language where supported, remove a translation, test long strings and emergency updates.",
+    "expected": "Fallback is readable and explicit; no invented Twi support or stale emergency wording. Actual initial languages are listed; workers review pilot content.",
+    "evidence": "Translation inventory/version, screenshots and reviewer record.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA46",
+    "title": "Provider time/provenance and timeout hygiene",
+    "requirements": [
+      "D1",
+      "D3",
+      "D6",
+      "S3"
+    ],
+    "release_gate": "Demo",
+    "method": "Adapter unit/API fault injection",
+    "severity": "Critical",
+    "preconditions": "Provider with/without issue time, stale response, coordinates and timeout fixtures.",
+    "steps": "Delay requests, omit issue time, send wrong coordinates or outdated coverage and cross local day boundary.",
+    "expected": "Fetch/issue/valid times remain distinct; wrong/expired data is flagged; timeout is bounded and cannot block a newly arrived help event.",
+    "evidence": "Adapter fixtures, request timing and independent-help assertion.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA47",
+    "title": "Retention/deletion with queued identity attribution",
+    "requirements": [
+      "D9",
+      "D13",
+      "D14",
+      "P1",
+      "P3"
+    ],
+    "release_gate": "Pilot",
+    "method": "Clock-controlled storage + privacy review",
+    "severity": "Critical",
+    "preconditions": "Approved retention schedule and queue reconciliation policy; short test TTLs only.",
+    "steps": "Advance retention/deletion, deliver a still-queued old-assignment event, rotate credentials and inspect expiry.",
+    "expected": "Only necessary identity link persists within approved constraints; attributable queued help is not silently relabeled/deleted; unrelated data expires and no indefinite history appears.",
+    "evidence": "Policy version, synthetic deletion/attribution tests and audit review.",
+    "status": "Not run"
+  },
+  {
+    "id": "QA48",
+    "title": "Gateway/watch retirement and credential revocation",
+    "requirements": [
+      "D11",
+      "D14",
+      "P1",
+      "P3"
+    ],
+    "release_gate": "Bench / Pilot",
+    "method": "Security + assignment integration",
+    "severity": "Critical",
+    "preconditions": "Assigned gateway/watch with revocable credentials.",
+    "steps": "Retire/transfer device, revoke old token and attempt uploads/reads/acknowledgements.",
+    "expected": "Revoked access fails; no cross-site reuse; pending legitimate events use the documented reconciliation path, not a permanent bypass.",
+    "evidence": "Revocation/transfer tests and scoped audit records.",
+    "status": "Not run"
+  }
+]

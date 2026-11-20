@@ -1,0 +1,84 @@
+$ npm run test:browser
+
+> exaclim@0.1.0 test:browser
+> npm run build && python3 scripts/check_browser.py
+
+
+> exaclim@0.1.0 build
+> vite build
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 183 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              14.99 kB │ gzip:  4.18 kB
+dist/styles.css                              93.12 kB │ gzip: 13.67 kB
+dist/assets/announce-DIEf9ve1.js              0.05 kB │ gzip:  0.06 kB
+dist/assets/announce-OG2sjTD8.js              0.71 kB │ gzip:  0.45 kB
+dist/assets/keyboard-BwM5nD8D.js              7.22 kB │ gzip:  2.91 kB
+dist/assets/sheet-presentation-BoniGz4G.js   35.74 kB │ gzip: 12.94 kB
+dist/app.js                                 250.62 kB │ gzip: 86.23 kB
+
+✓ built in 275ms
+PASS: Crew fixture loaded with explicit synthetic provenance
+PASS: Small crew counts withheld in browser
+PASS: Routine scenario green
+PASS: Hot scenario red retained during sensor loss
+PASS: Lost sensor cannot display green
+PASS: Help remains emergency after acknowledgement and cooler inputs
+PASS: French draft emergency message shown
+PASS: Optional synthetic projection escalates baseline and labels interpretation
+PASS: Offline help latched locally and synchronized after reconnect
+PASS: Browser reload retains server emergency session
+PASS: Help remains available during delayed scenario request
+PASS: SDK reset dialog cancel/Escape preserves state and returns focus; confirm resets
+PASS: SDK checkbox changes with Space; switch checked by keyboard earlier
+PASS: SDK select supports keyboard selection and returns focus
+PASS: All required numeric fields block empty submission
+PASS: SDK agent discovers named controls and changes every scenario field through real actions
+PASS: SDK vertical tabs support arrows, End, focus and panel relationships
+PASS: Every interactive button uses an SDK part; no native select remains
+PASS: SDK horizontal tabs follow RTL reading direction
+PASS: Browser-resolved SDK tokens meet text, control-edge and focus contrast targets
+PASS: All three views fit 390px viewport without horizontal overflow
+PASS: No unexpected browser JavaScript, console or CSP errors
+{
+  "browser_checks_passed": 22,
+  "checks": [
+    "Crew fixture loaded with explicit synthetic provenance",
+    "Small crew counts withheld in browser",
+    "Routine scenario green",
+    "Hot scenario red retained during sensor loss",
+    "Lost sensor cannot display green",
+    "Help remains emergency after acknowledgement and cooler inputs",
+    "French draft emergency message shown",
+    "Optional synthetic projection escalates baseline and labels interpretation",
+    "Offline help latched locally and synchronized after reconnect",
+    "Browser reload retains server emergency session",
+    "Help remains available during delayed scenario request",
+    "SDK reset dialog cancel/Escape preserves state and returns focus; confirm resets",
+    "SDK checkbox changes with Space; switch checked by keyboard earlier",
+    "SDK select supports keyboard selection and returns focus",
+    "All required numeric fields block empty submission",
+    "SDK agent discovers named controls and changes every scenario field through real actions",
+    "SDK vertical tabs support arrows, End, focus and panel relationships",
+    "Every interactive button uses an SDK part; no native select remains",
+    "SDK horizontal tabs follow RTL reading direction",
+    "Browser-resolved SDK tokens meet text, control-edge and focus contrast targets",
+    "All three views fit 390px viewport without horizontal overflow",
+    "No unexpected browser JavaScript, console or CSP errors"
+  ]
+}
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice
+
+Exit status: 0

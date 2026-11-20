@@ -1,0 +1,16 @@
+{
+  "source_filename": "Exaclim_Dashboard_Requirements.pdf",
+  "source_pages": 2,
+  "source_sha256": "3f19ac6025558bf27dfd08880ee51e8e517efcc51cbed62756fe20d6366016fb",
+  "source_status": "Version 1 draft for team review",
+  "prepared_date": "2026-11-19",
+  "original_requirement_count": 24,
+  "engineering_jobs": 27,
+  "target_qa_cases": 48,
+  "target_qa_execution_status": "All Not run; existing prototype regression results are separate.",
+  "documents": [
+    "01-product-requirements.md",
+    "02-engineering-task-sheet.md",
+    "03-testing-and-quality-plan.md"
+  ]
+}
