@@ -288,10 +288,6 @@ function wireActions() {
     }
   });
   onAction('#cancel-crew-edit',()=>{state.editingCrew=null;setInput('new-crew-name','');setInput('new-crew-count','3');$('#crew-form-title').textContent='New crew';$('#cancel-crew-edit').hidden=true;$('#crew-error').textContent='';});
-  onAction('#sign-out',async()=>{
-    try{await api('/api/v1/auth/logout',{});clearAuthenticated();notify('Signed out.');}
-    catch(error){notify(`Sign out not confirmed: ${error.message}`);}
-  });
   $('#user-menu').addEventListener('action',async event=>{
     if(event.detail.value==='signout'){try{await api('/api/v1/auth/logout',{});clearAuthenticated();notify('Signed out.');}catch(error){notify(`Sign out not confirmed: ${error.message}`);}}
     else if(event.detail.value==='setup'){await loadSetup();$('#setup-dialog').open=true;}
