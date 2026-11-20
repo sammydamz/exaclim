@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initialState,snapshot,addSite,addCrew,assignWatch,scenario,acknowledge } from '../cloudflare/domain.ts';
+import { initialState,snapshot,addSite,addCrew,assignWatch,scenario,acknowledge,recordWeather } from '../cloudflare/domain.ts';
 import type { State } from '../cloudflare/domain.ts';
 const NOW='2026-11-19T10:00:00Z';
 const later=(seconds:number)=>new Date(Date.parse(NOW)+seconds*1000);
@@ -91,4 +91,23 @@ test('validation rejects malformed values and watch IDs are unique across sites'
 test('JSON round-trip reproduces state and Tema starts empty',()=>{
  const state=initialState(NOW);assert.deepEqual(snapshot(JSON.parse(JSON.stringify(state)),'accra',NOW),snapshot(state,'accra',NOW));
  const result=snapshot(state,'tema',NOW);assert.deepEqual(result.groups,[]);assert.deepEqual(result.suggestions,[]);assert.deepEqual(result.emergencies,[]);
+});
+test('live weather cache renders site-local hours and missing hours stay unknown',()=>{
+ const state=initialState(NOW),site=state.sites.accra;
+ recordWeather(site,{fetched_at:NOW,provider_issue_time:NOW,hours:{'2026-11-19T09:00':{temperature_c:30.5,humidity_pct:60},'2026-11-19T13:00':{temperature_c:33.2,humidity_pct:55},'2026-11-20T13:00':{temperature_c:35,humidity_pct:50}}},new Date(NOW));
+ const forecast=snapshot(state,'accra',NOW).forecast;
+ assert.equal(forecast.source_type,'live');assert.equal(forecast.provider,'Open-Meteo');assert.equal(forecast.stale,false);
+ const today=forecast.days[0].hours,midday=today.find(h=>h.local_time.startsWith('2026-11-19T13'));
+ assert.equal(midday?.display_risk,'red');assert.equal(midday?.data_quality,'live');assert.equal(midday?.temperature_c,33.2);
+ assert.ok(today.every(h=>h.data_quality==='missing'?h.display_risk==='unknown'&&h.caution:true));
+ assert.ok(forecast.days[1].hours.some(h=>h.display_risk==='red'));
+});
+test('weather payloads are validated and stale caches degrade to unknown without synthetic substitution',()=>{
+ const state=initialState(NOW),site=state.sites.accra;
+ assert.throws(()=>recordWeather(site,{fetched_at:NOW,provider_issue_time:null,hours:{'bad-key':{temperature_c:1,humidity_pct:null}}},new Date(NOW)));
+ assert.throws(()=>recordWeather(site,{fetched_at:'2099-01-01T00:00:00Z',provider_issue_time:null,hours:{}},new Date(NOW)));
+ recordWeather(site,{fetched_at:NOW,provider_issue_time:null,hours:{'2026-11-19T09:00':{temperature_c:20,humidity_pct:50}}},new Date(NOW));
+ const stale=snapshot(state,'accra',later(10801)).forecast;
+ assert.equal(stale.stale,true);assert.equal(stale.data_quality,'stale');assert.ok(stale.days[0].hours.every(h=>h.display_risk==='unknown'));
+ assert.ok(JSON.stringify(stale).includes('Open-Meteo'));
 });
