@@ -174,9 +174,29 @@ text(s,.45,1.85,4.3,.65,'Over 2.4 billion',31,True,ACCENT)
 text(s,.45,2.59,4.2,.88,'workers worldwide are exposed to excessive heat, according to WHO and WMO, citing ILO [1].',14)
 label_block(s,.45,3.62,4.2,'Prevention guidance [2, 3]','NIOSH recommends acclimatization, hydration, rest, training and supervision.',1.1)
 text(s,5.03,1.94,4.15,.32,'Software checks passed [7]',15,True,INK)
-for y,count,description in [(2.47,'72','Python reference tests'),(3.13,'16','TypeScript domain tests'),(3.79,'27','Chromium workflow checks')]:
- text(s,5.03,y,.72,.49,count,23,True,ACCENT)
- text(s,5.87,y+.09,3.55,.38,description,13)
+from pptx.chart.data import CategoryChartData
+from pptx.enum.chart import XL_CHART_TYPE, XL_LABEL_POSITION
+data=CategoryChartData()
+data.categories=['Python reference','TypeScript domain','Chromium workflow']
+data.add_series('Checks passed',(72,16,27))
+chart=s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, Inches(4.93), Inches(2.43), Inches(4.61), Inches(2.14), data).chart
+auto_title=OxmlElement('c:autoTitleDeleted')
+auto_title.set('val','1')
+chart._chartSpace.chart.insert(0,auto_title)
+chart.has_legend=False
+chart.value_axis.minimum_scale=0
+chart.value_axis.maximum_scale=90
+chart.value_axis.visible=False
+chart.value_axis.has_major_gridlines=False
+chart.category_axis.reverse_order=True
+chart.category_axis.tick_labels.font.size=Pt(12)
+plot=chart.plots[0]
+plot.series[0].format.fill.solid()
+plot.series[0].format.fill.fore_color.rgb=col(ACCENT)
+plot.has_data_labels=True
+plot.data_labels.position=XL_LABEL_POSITION.OUTSIDE_END
+plot.data_labels.font.size=Pt(12)
+plot.data_labels.font.bold=True
 text(s,.45,4.94,9,.30,'Checks used generated scenarios. Field reliability, clinical accuracy and health outcomes remain unverified.',10.8,False,MUTED)
 note(s,7,'[1] WHO/WMO news release, 22 August 2025, verified 20 November 2026. It reports >2.4 billion exposed workers and attributes estimates to ILO. No Ghana-specific prevalence or project-specific effect size is inferred. [2] NIOSH Criteria, 2016 publication 2016-106. [3] Current NIOSH workplace recommendations verified 20 November 2026. [7] Existing released/reference evidence: 72 Python tests; 16 deployed-domain tests; 27 local Chromium workflow assertions. Earlier hosted version passed 25 browser checks; counts are different test runs, not 115 independent requirements or a clinical trial. The 48 planned acceptance cases are not all signed off. Working-tree operational extensions have additional unit checks but lack a complete released integration run; omitted from this proof claim. Do not present simulated fault injection as physical field testing.')
 
@@ -205,18 +225,33 @@ text(s,.45,5.05,8.9,.18,'No procurement, battery-life, IP-rating, range or deliv
 note(s,10,'The user explicitly chose to simulate watch/phone connectivity for this submission and identified Android as the target. This is not a native Android BLE qualification claim. Verified manufacturer candidate: Adafruit Feather nRF52840 Express product 4062, BLE and supported development tooling, accessed 20 November 2026. It is a development board, not a finished certified wrist wearable. No price is quoted because freight, taxes, battery carriage, revision and local availability have not been confirmed. Source actual batteries/drivers/actuators with matched electrical ratings and qualified assembly review. New architecture does not require the older zone-station kit, so its historical budget is not copied. Bench and human-factor trials must verify independent alarms, queue/reboot integrity, runtime, charge safety and glove/sunlight use before any field-reliance statement.')
 
 s=clear_body(11,'Application access','Hosted sign-in verified during preparation on 20 November 2026.')
-text(s,.5,1.95,8.8,.28,'Open Exaclim',14,True,ACCENT)
-text(s,.5,2.34,8.8,.34,URL,18,True,INK,URL)
-table(s,.5,3.02,8.8,['Email','Password'],[['demo@exaclim.test','Exaclim2026!']],[5.0,3.8],16,.5)
-text(s,.5,4.24,8.8,.62,'Sign in → review forecast and crews → open Scenarios → request help → acknowledge receipt.',14)
-text(s,.5,5.0,8.8,.22,'Use fictional information only. Public evaluation account; not a real-worker deployment.',10.5,False,MUTED)
+panel(s,.4,1.84,5.1,2.98,BEIGE)
+text(s,.63,2.05,4.7,.37,'Supervisor sign-in',17,True,INK)
+text(s,.63,2.60,4.65,.4,URL,12,True,ACCENT,URL)
+text(s,.63,3.22,1.06,.25,'Email',12,False,MUTED)
+text(s,1.78,3.19,3.39,.34,'demo@exaclim.test',15,True)
+text(s,.63,3.86,1.06,.25,'Password',12,False,MUTED)
+text(s,1.78,3.83,3.39,.34,'Exaclim2026!',15,True)
+panel(s,5.65,1.84,3.93,2.98,'F4F0E9')
+text(s,5.88,2.05,3.46,.37,'Try a help request',17,True)
+for i,item in enumerate(['Review the forecast and crews.','Open Scenarios and request help.','Acknowledge receipt on the dashboard.']):
+ y=2.62+i*.62
+ text(s,5.88,y,.32,.32,str(i+1),14,True,ACCENT)
+ text(s,6.28,y,3.03,.53,item,13)
+text(s,.45,4.99,8.8,.24,'Use fictional information in the public evaluation account.',11,False,MUTED)
 note(s,11,'Valid hosted access was tested with HTTP 200 login and logout while preparing this document. Credentials are intentionally included to meet the template requirement. No private Cloudflare account token or administrator secret from the development environment is included. This published evaluation account is not suitable for real worker information. The public running release may change; recheck login and all links just before portal upload. Account recovery/site CRUD/gateway upgrades in the uncommitted working tree are not presented as available on the checked release. Repository: '+REPO)
 
 s=clear_body(12,'Path to pilot and scale','Indicative sequence after submission, dependent on people, equipment and approvals.')
-table(s,.42,1.86,9.15,['Stage','Work and stakeholders','Exit gate'],[
-['1. Bench / governance','2–4 weeks after parts arrive. Embedded / Android leads, occupational reviewer and worker representatives.','Verified alerts, power and delivery; agreed privacy, language and response plans.'],
-['2. Shadow feasibility','4–6 weeks at one consenting construction site. Proposed 3 crews; recruitment and sample size to be agreed.','Observe usability, availability, alerts and response. Existing controls remain authoritative.'],
-['3. Controlled expansion','Safety and governance review, independent evaluation, then a second site / sector.','Resolve failures and regulatory needs; use a study suited to any effectiveness claim.']],[1.65,4.55,2.95],11.8,.78)
+stages=[
+ ('Bench and governance','2–4 weeks after parts arrive','Android and embedded leads test alerts, power and delivery. Worker representatives and an occupational reviewer agree on privacy, language and response plans.'),
+ ('Shadow pilot','4–6 weeks at one site','Recruit one consenting site. Three crews are proposed. Observe usability, uptime, alerts and response while existing safety controls stay in place.'),
+ ('Controlled expansion','After independent review','Resolve safety, governance and regulatory issues before adding a second site or sector. Design a separate study to assess effectiveness.')]
+for i,(heading,timing,body) in enumerate(stages):
+ x=.4+i*3.12
+ panel(s,x,1.85,2.95,2.94,[BEIGE,'F4F0E9',BEIGE][i])
+ text(s,x+.18,2.06,2.62,.62,heading,16,True,INK)
+ text(s,x+.18,2.77,2.62,.43,timing,12,True,ACCENT)
+ text(s,x+.18,3.28,2.59,1.39,body,12)
 text(s,.45,4.91,8.95,.33,'Sustainability hypothesis: site subscription + maintained devices. Validate willingness to pay, supplier costs and paid weather access.',11.2,False,ACCENT)
 note(s,12,'No pilot partner, clinician, worker representative, ethics approval or supplier commitment is secured by this document. Proposed sequence, not booked dates. Site permission, appropriate institutional ethics determination, Ghana Act 843/DPC obligations, controller/processor agreements, cross-border hosting and intended-use/device classification review are prerequisites where applicable. Begin in shadow mode; never increase heat exposure, withhold controls or delay care to test Exaclim. A small feasibility study cannot establish reduced heat illness. Scale only after reliability, worker acceptability, equitable access and site response capacity are demonstrated. Commercial use needs a viable maintenance/support model and appropriate weather-service access. Do not reuse the old station/two-badge allowance as a final price per worker.')
 
@@ -229,9 +264,8 @@ table(s,.42,1.87,9.15,['Material','Ownership / licence','Restriction / action'],
 note(s,13,'Local package licence metadata verified on 20 November 2026: @ui-sdk/core/react/web 0.1.0-beta.3 Apache-2.0; hono 4.13.19 MIT; react 19.3.1 MIT; @mui/material 9.5.0 MIT; @awesome.me/webawesome 3.15.0 MIT; @fontsource/inter 5.3.0 OFL-1.1; cf 1.0.0-rc.2 MIT OR Apache-2.0. The UI SDK licence is Apache-2.0, not MIT. Material UI/React code is a working-tree upgrade, not a claim that the checked hosted release has finished migration. This editable deck adds native PowerPoint shapes and text; it retains organizer-provided artwork. No training dataset, clinical model weights or clinical certification is claimed. The team must verify actual contributor ownership and any employer/institution assignment or organizer entry-IP terms; those cannot be inferred from Git authorship. Design reference and skill guidance do not grant ownership of Deel branding. Font text uses Liberation Sans on export; organizer artwork remains as supplied.')
 
 s=clear_body(14,'Conflict of interest declaration','Confirmed by the team on 20 November 2026.')
-text(s,.5,2.0,8.8,.36,'No relationships to disclose',20,True,ACCENT)
-text(s,.5,2.68,8.75,1.2,'The team declares no relationships with the organizers, partners or judges that require disclosure.',17)
-text(s,.5,4.37,8.75,.52,'If a relevant relationship arises before judging, the team will update the declaration and notify the organizers.',13,False,MUTED)
+card(s,.4,2.04,9.18,1.84,'shield','No relationships to disclose','The team declares no relationships with the organizers, partners or judges that require disclosure.','174C47')
+text(s,.60,4.2,8.75,.6,'If a relevant relationship arises before judging, the team will update the declaration and notify the organizers.',13,False,MUTED)
 note(s,14,'The user explicitly confirmed “No relationships to disclose” on 20 November 2026 in response to the required conflict-of-interest question. This declaration records that confirmation; it is not an independent investigation or an invented assertion. Update if circumstances change before judging.')
 
 s=clear_body(15,'Sources and evidence register','Primary sources checked on 20 November 2026. Full URLs and claim notes are in the speaker notes.')
