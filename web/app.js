@@ -7,7 +7,7 @@ import { agent, onAction, inputValue, setInput, setSelect, escapeHTML as esc, ic
 
 globalThis.exaclim = Object.freeze({ agent });
 const $ = selector => document.querySelector(selector);
-const state = {user:null, site:'accra', snapshot:null, offline:false, busy:false, epoch:0, day:'today', hour:null, forecastSignature:'', emergencySignature:'', siteSignature:'', setup:null, ackErrors:new Map(), pendingAcks:new Set(), editingCrew:null};
+const state = {user:null, site:'accra', snapshot:null, offline:false, busy:false, epoch:0, day:'today', hour:null, forecastSignature:'', emergencySignature:'', siteSignature:'', setup:null, ackErrors:new Map(), pendingAcks:new Set(), editingCrew:null, streamLive:false};
 let toastTimer;
 const scenarios = [
   ['normal','Routine shift','Refresh readings for a routine shift.'],
@@ -76,7 +76,8 @@ function showAuthenticated() {
   ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=false;});
 }
 function clearAuthenticated() {
-  state.epoch++;state.busy=false;state.user=null;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.siteSignature='';
+  state.epoch++;state.busy=false;state.user=null;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.siteSignature='';state.streamLive=false;
+  stopStream();
   $('#dashboard').hidden=true;$('#login-page').hidden=false;
   ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=true;});
   $('#emergency-region').replaceChildren();$('#crew-list').replaceChildren();$('#suggestions-list').replaceChildren();$('#setup-crews').replaceChildren();$('#setup-assignments').replaceChildren();
@@ -228,7 +229,8 @@ async function refreshDashboard() {
 }
 async function changeSite(id) {
   if(!id || id===state.site)return;
-  state.epoch++;state.site=id;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.hour=null;
+  state.epoch++;state.site=id;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.hour=null;state.streamLive=false;
+  stopStream();startStream();
   $('#emergency-region').replaceChildren();$('#crew-list').innerHTML='<div class="empty-state">Loading the selected site…</div>';$('#suggestions-list').replaceChildren();$('#forecast-hours').replaceChildren();$('#hour-detail').textContent='Waiting for authorized site data.';
   state.busy=false;await refreshDashboard();
 }
@@ -316,11 +318,29 @@ function wireActions() {
 }
 async function initialize() {
   wireActions();
-  try {const result=await api('/api/v1/auth/me');state.user=result.user;state.site=state.user?.site_ids?.[0] || 'accra';showAuthenticated();await refreshDashboard();}
+  try {const result=await api('/api/v1/auth/me');state.user=result.user;state.site=state.user?.site_ids?.[0] || 'accra';showAuthenticated();await refreshDashboard();startStream();}
   catch {$('#login-page').hidden=false;}
-  setInterval(()=>{if(state.user && !document.hidden && navigator.onLine)refreshDashboard();},1000);
+  setInterval(()=>{if(state.user && !document.hidden && navigator.onLine && !state.streamLive)refreshDashboard();},1000);
   setInterval(()=>{if(state.user && state.snapshot){renderConnection();renderCrews();}},1000);
   window.addEventListener('offline',()=>{state.offline=true;if(state.user)render();});
-  window.addEventListener('online',()=>refreshDashboard());
+  window.addEventListener('online',()=>{refreshDashboard();resetStream();});
 }
+let streamSource=null,streamBackoff=1000,streamTimer=null;
+function startStream() {
+  if(!state.user||!window.EventSource)return;
+  stopStream();
+  const site=encodeURIComponent(state.site),source=new EventSource(`/api/v1/sites/${site}/events`);
+  streamSource=source;
+  source.addEventListener('open',()=>{state.streamLive=true;state.offline=false;streamBackoff=1000;renderConnection();});
+  source.addEventListener('dashboard',event=>{
+    try {
+      const detail=JSON.parse(event.data);
+      if(detail.new_emergency){refreshDashboard();notify('New help request received');}
+      else if(!document.hidden)refreshDashboard();
+    } catch {/* malformed event; polling continues */}
+  });
+  source.onerror=()=>{state.streamLive=false;renderConnection();stopStream();streamBackoff=Math.min(streamBackoff*2,30000);streamTimer=setTimeout(startStream,streamBackoff);};
+}
+function stopStream() {if(streamSource){streamSource.close();streamSource=null;}if(streamTimer){clearTimeout(streamTimer);streamTimer=null;}}
+function resetStream() {state.streamLive=false;streamBackoff=1000;if(state.user)startStream();}
 initialize();

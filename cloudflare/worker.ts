@@ -209,6 +209,45 @@ app.post('/api/v1/gateway/help-events',async c=>{
  const duplicate=event.received_at!==clock.toISOString();
  return c.json({ok:true,event_id:event.id,duplicate,received_at:event.received_at},duplicate?200:201);
 });
+app.get('/api/v1/sites/:id/events',async c=>{
+ const id=c.req.param('id');const u=await user(c,id);
+ const cursor=c.req.query('cursor')??'';
+ const encoder=new TextEncoder();
+ let closed=false;
+ const stream=new ReadableStream({
+  async start(controller) {
+   const send=(event:string,data:unknown,retry?:number)=>{if(closed)return;const payload=`event: ${event}\ndata: ${JSON.stringify(data)}\n${retry!==undefined?`retry: ${retry}\n`:''}\n`;controller.enqueue(encoder.encode(payload));};
+   const close=()=>{if(!closed){closed=true;try{controller.close();}catch{/* already closed */}}};
+   c.req.raw.signal.addEventListener('abort',close);
+   let lastCursor=cursor,lastRevision=-1;
+   const poll=async()=>{
+    try {
+     const {state,revision}=await load(c.env.DB);
+     if(revision!==lastRevision) {
+      lastRevision=revision;
+      const snapshotData=snapshot(state,id);
+      const emergencies=snapshotData.emergencies.filter(e=>!e.acknowledged_at).map(e=>e.id);
+      const signature=JSON.stringify([revision,emergencies]);
+      if(signature!==lastCursor) {
+       const previous=lastCursor?JSON.parse(lastCursor):null;
+       const newEmergency=previous&&emergencies.some(eventId=>!previous[1].includes(eventId));
+       lastCursor=signature;
+       send('dashboard',{revision,generated_at:snapshotData.generated_at,emergency_ids:emergencies,new_emergency:!!newEmergency,cursor:signature});
+      }
+     }
+    } catch {send('error',{code:'stream_error',message:'Stream read failed. Reconnecting.'});}
+   };
+   send('open',{site:id,cursor:lastCursor||null,retry:3000});
+   await poll();
+   const interval=setInterval(poll,3000);
+   // Worker lifespan guard: close if the client is gone or after 10 minutes (client reconnects with cursor).
+   const stopAt=Date.now()+600000;
+   const stop=setInterval(()=>{if(closed||Date.now()>stopAt){clearInterval(interval);clearInterval(stop);close();}},5000);
+  },
+  cancel(){closed=true;}
+ });
+ return new Response(stream,{headers:{'Content-Type':'text/event-stream','Cache-Control':'private, no-store',Connection:'keep-alive'}});
+});
 app.all('/api/*',()=>fail(404,'not_found','Endpoint not found.'));
 app.all('*',async c=>{const response=await c.env.ASSETS.fetch(c.req.raw);const headers=new Headers(response.headers);headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");headers.set('X-Content-Type-Options','nosniff');headers.set('Referrer-Policy','no-referrer');return new Response(response.body,{status:response.status,headers});});
 export default app;
