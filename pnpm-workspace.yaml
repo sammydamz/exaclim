@@ -1,0 +1,7 @@
+allowBuilds:
+  workerd: true
+minimumReleaseAgeExclude:
+  - cf@1.0.0-rc.2
+permissions:
+  '@ui-sdk/core':
+    skills: true

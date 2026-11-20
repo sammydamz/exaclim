@@ -171,7 +171,8 @@ class Handler(BaseHTTPRequestHandler):
                                  'assignments': site['assignments'], 'mode': 'synthetic-demo'})
         if path.startswith('/api/'):
             raise APIError(404, 'not_found', 'Endpoint not found.')
-        files = {'/': ROOT/'index.html', '/app.js': ROOT/'app.js', '/styles.css': ROOT/'styles.css'}
+        files = {'/': ROOT/'index.html', '/app.js': ROOT/'app.js', '/styles.css': ROOT/'styles.css',
+                 '/exaclim.png': ROOT/'exaclim.png'}
         if path in files:
             file = files[path]
         elif path.startswith('/assets/'):
@@ -184,7 +185,7 @@ class Handler(BaseHTTPRequestHandler):
             raise APIError(503, 'build_missing', 'Frontend build unavailable. Run npm run build.')
         body = file.read_bytes()
         mime = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css',
-                '.woff2':'font/woff2', '.woff':'font/woff'}[file.suffix]
+                '.woff2':'font/woff2', '.woff':'font/woff', '.png':'image/png'}[file.suffix]
         self.send_response(200)
         self.send_header('Content-Type', mime + ('; charset=utf-8' if file.suffix in ('.html','.js','.css') else ''))
         self.send_header('Content-Length', str(len(body)))

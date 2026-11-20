@@ -94,9 +94,7 @@ def main():
                     page.get_by_role('button', name='Refresh dashboard', exact=True).click()
 
                 def sign_in(password='Exaclim2026!'):
-                    if not page.get_by_role('dialog').is_visible():
-                        page.locator('#open-login').click()
-                    expect(page.get_by_role('dialog')).to_be_visible()
+                    expect(page.locator('#login-page')).to_be_visible()
                     page.locator('#login-email input').fill('demo@exaclim.test')
                     page.locator('#login-password input').fill(password)
                     page.locator('#submit-login').click()
@@ -105,7 +103,7 @@ def main():
                 assert health.ok and 'synthetic' in json.dumps(health.json()).lower(), \
                     'This harness must only mutate an explicitly synthetic test backend'
                 page.goto(base, wait_until='networkidle')
-                expect(page.locator('#welcome')).to_be_visible()
+                expect(page.locator('#login-page')).to_be_visible()
                 expect(page.locator('#dashboard')).to_be_hidden()
                 assert context.request.get(base + '/api/v1/auth/me').status == 401
                 passed('Signed-out landing does not expose dashboard or identity', ['QA23', 'QA35'])
@@ -118,9 +116,9 @@ def main():
                 page.locator('#login-password input').fill('Exaclim2026!')
                 page.locator('#submit-login').click()
                 expect(page.locator('#dashboard')).to_be_visible()
-                expect(page.get_by_role('dialog')).not_to_be_visible()
+                expect(page.locator('#login-page')).to_be_hidden()
                 expect(page.locator('#forecast-hours button')).to_have_count(24)
-                passed('Password login loads authenticated dashboard and closes SDK dialog', ['QA23', 'QA36'])
+                passed('Password login loads authenticated dashboard and hides sign-in page', ['QA23', 'QA36'])
 
                 headings = page.locator('#dashboard h2').all_text_contents()
                 assert headings == ['Heat forecast', 'Crew status', 'Breaks & rotation'], headings
@@ -284,7 +282,7 @@ def main():
 
                 page.locator('#sign-out').click()
                 expect(page.locator('#dashboard')).to_be_hidden()
-                expect(page.locator('#welcome')).to_be_visible()
+                expect(page.locator('#login-page')).to_be_visible()
                 assert context.request.get(base + '/api/v1/auth/me').status == 401
                 page.reload(wait_until='networkidle')
                 expect(page.locator('#dashboard')).to_be_hidden()

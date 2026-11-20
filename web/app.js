@@ -63,7 +63,7 @@ async function api(path, body, method = body===undefined ? 'GET' : 'POST') {
     const response = await fetch(path, {method,credentials:'same-origin',signal:controller.signal,headers:{Accept:'application/json',...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});
     let result;
     try { result = await response.json(); } catch { throw new Error('The server returned an unreadable response. Please retry.'); }
-    if (response.status===401 && !path.endsWith('/login') && state.user) { clearAuthenticated(); $('#login-error').textContent='Your session ended. Sign in again.'; $('#login-dialog').open=true; }
+    if (response.status===401 && !path.endsWith('/login') && state.user) { clearAuthenticated(); $('#login-error').textContent='Your session ended. Sign in again.'; }
     if (!response.ok) throw new Error(typeof result.error==='string' ? result.error : result.error?.message || `Request could not be completed (${response.status}).`);
     return result;
   } catch (error) {
@@ -72,15 +72,16 @@ async function api(path, body, method = body===undefined ? 'GET' : 'POST') {
   } finally { clearTimeout(timeout); }
 }
 function showAuthenticated() {
-  $('#welcome').hidden=true;$('#dashboard').hidden=false;
+  $('#login-page').hidden=true;$('#dashboard').hidden=false;
   ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=false;});
 }
 function clearAuthenticated() {
   state.epoch++;state.busy=false;state.user=null;state.snapshot=null;state.setup=null;state.ackErrors.clear();state.pendingAcks.clear();state.forecastSignature='';state.emergencySignature='';state.siteSignature='';
-  $('#dashboard').hidden=true;$('#welcome').hidden=false;
+  $('#dashboard').hidden=true;$('#login-page').hidden=false;
   ['#site-switcher','#header-utilities'].forEach(selector=>{$(selector).hidden=true;});
   $('#emergency-region').replaceChildren();$('#crew-list').replaceChildren();$('#suggestions-list').replaceChildren();$('#setup-crews').replaceChildren();$('#setup-assignments').replaceChildren();
   ['#setup-dialog','#demo-dialog'].forEach(selector=>{$(selector).open=false;});
+  $('#login-email')?.focus?.();
 }
 async function signIn() {
   const form=$('#login-form');if (!form.reportValidity()) return;
@@ -88,7 +89,7 @@ async function signIn() {
   try {
     const result=await api('/api/v1/auth/login',{email:inputValue('login-email'),password:inputValue('login-password')});
     state.user=result.user;state.site=state.user?.site_ids?.[0] || 'accra';state.offline=false;
-    $('#login-dialog').open=false;setInput('login-password','');showAuthenticated();
+    setInput('login-password','');showAuthenticated();
     await refreshDashboard();notify('Signed in');
   } catch(error) {$('#login-error').textContent=error.message;}
 }
@@ -253,7 +254,6 @@ async function saveForm(formId,errorId,path,body,method,success) {
   } catch(error){$(errorId).textContent=`Not saved: ${error.message}`;}
 }
 function wireActions() {
-  onAction('#open-login',()=>{$('#login-dialog').open=true;});
   onAction('#fill-demo',()=>{setInput('login-email','demo@exaclim.test');setInput('login-password','Exaclim2026!');});
   onAction('#submit-login',signIn);
   $('#login-form').addEventListener('submit',event=>event.preventDefault());
@@ -285,7 +285,7 @@ function wireActions() {
 async function initialize() {
   wireActions();
   try {const result=await api('/api/v1/auth/me');state.user=result.user;state.site=state.user?.site_ids?.[0] || 'accra';showAuthenticated();await refreshDashboard();}
-  catch {$('#login-dialog').open=true;}
+  catch {$('#login-page').hidden=false;}
   setInterval(()=>{if(state.user && !document.hidden && navigator.onLine)refreshDashboard();},1000);
   setInterval(()=>{if(state.user && state.snapshot){renderConnection();renderCrews();}},1000);
   window.addEventListener('offline',()=>{state.offline=true;if(state.user)render();});
